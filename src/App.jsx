@@ -455,16 +455,16 @@ function Home({ checkins, chats, onNav, userName, user }) {
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: `${pad} ${padH} 0` }} className="fu">
 
       {/* header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
         <div>
-          <p style={{ color: C.muted, fontSize: 13, marginBottom: 2 }}>{gr}</p>
-          <h1 style={{ color: C.text, fontSize: 26, fontWeight: 700, fontFamily: "'DM Serif Display',serif" }}>
-            {userName ? `Come stai ${userName}?` : 'Come stai oggi?'}
+          <p style={{ color: C.muted, fontSize: 12, fontWeight: 500, marginBottom: 3 }}>{gr}</p>
+          <h1 style={{ color: C.text, fontSize: 28, fontWeight: 400, fontFamily: "'DM Serif Display',serif", lineHeight: 1.1 }}>
+            {userName ? `Come stai, ${userName}?` : 'Come stai oggi?'}
           </h1>
         </div>
         <button className="tap" onClick={() => onNav('profile')}
-          style={{ background: C.faint, border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-          <Ico n="profile" sz={22} c={C.accent}/>
+          style={{ background: C.faint, border: 'none', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginTop: 4 }}>
+          <Ico n="profile" sz={20} c={C.accent}/>
         </button>
       </div>
 
@@ -520,29 +520,18 @@ function Home({ checkins, chats, onNav, userName, user }) {
           { id: 'finder',  icon: 'search',  title: 'Trova il percorso', sub: 'Supporto professionale' },
         ].map(item => (
           <button key={item.id} className="tap" onClick={() => onNav(item.id)}
-            style={{ width: '100%', height: '100%', padding: 'clamp(14px,2vw,22px)', borderRadius: 22, border: `1px solid ${C.border}`, background: C.accentDim, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-            <div style={{ width: 42, height: 42, borderRadius: 14, background: `rgba(${C.accentRgb},.12)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Ico n={item.icon} sz={20} c={C.accent}/>
+            style={{ width: '100%', height: '100%', padding: 'clamp(12px,2vw,20px)', borderRadius: 20, border: `0.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', aspectRatio: '1' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Ico n={item.icon} sz={18} c={C.accent}/>
             </div>
             <div>
-              <div style={{ color: C.text, fontSize: 'clamp(13px,1.5vw,16px)', fontWeight: 700, marginBottom: 2 }}>{item.title}</div>
-              <div style={{ color: C.muted, fontSize: 'clamp(11px,1.2vw,13px)' }}>{item.sub}</div>
+              <div style={{ color: C.text, fontSize: 'clamp(12px,1.4vw,15px)', fontWeight: 600, marginBottom: 2 }}>{item.title}</div>
+              <div style={{ color: C.muted, fontSize: 'clamp(10px,1.1vw,12px)' }}>{item.sub}</div>
             </div>
           </button>
         ))}
       </div>
 
-      {/* DEBUG TEMPORANEO — rimuovere dopo il debug */}
-      {user && (() => {
-        let ls1 = 0, ls2 = 0
-        try { const r = localStorage.getItem('liv_ci_v1'); if (r) ls1 = (JSON.parse(r) || []).length } catch {}
-        try { const r = localStorage.getItem('ci_v24');    if (r) ls2 = (JSON.parse(r) || []).length } catch {}
-        return (
-          <div style={{ flexShrink: 0, padding: '4px 8px', fontSize: 10, color: C.muted, textAlign: 'center', fontFamily: 'monospace' }}>
-            Debug: {checkins.length} checkin Supabase · {ls1} in liv_ci_v1 · {ls2} in ci_v24
-          </div>
-        )
-      })()}
     </div>
   )
 }
@@ -553,10 +542,10 @@ function EmoPicker({ title, sub, sel, intens, color, onSel, onInt, onNext, canSk
     <div>
       <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center', marginBottom: sub ? 4 : 20 }}>{title}</h2>
       {sub && <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', marginBottom: 20 }}>{sub}</p>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 10, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 20 }}>
         {EMOTIONS.filter(e => e === 'Altro' || e !== excl).map(e => (
           <button key={e} className="tap" onClick={() => onSel(e)}
-            style={{ padding: '13px', borderRadius: 16, border: `2px solid ${sel === e ? color : C.border}`, background: sel === e ? `${color}1a` : C.card, color: sel === e ? color : 'rgba(0,0,0,.45)', fontSize: 14, fontWeight: 600, transition: 'all .2s' }}>
+            style={{ padding: '11px 8px', borderRadius: 100, border: `1.5px solid ${sel === e ? color : C.border}`, background: sel === e ? `${color}18` : C.card, color: sel === e ? color : 'rgba(45,45,45,.5)', fontSize: 13, fontWeight: 600, transition: 'all .18s', textAlign: 'center' }}>
             {e}
           </button>
         ))}
@@ -649,12 +638,12 @@ function CheckIn({ onBack, onDone }) {
           <div>
             <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center', marginBottom: 8 }}>Qual è l'area che pesa di più?</h2>
             <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', marginBottom: 24 }}>Quella che sta influenzando di più il tuo stato</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(130px,1fr))', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
               {AREAS.map(a => (
                 <button key={a.id} className="tap" onClick={() => sd({ ...d, area: a.l, customArea: a.id === 'altro' ? (d.customArea || '') : '' })}
-                  style={{ padding: '16px 10px', borderRadius: 18, border: `2px solid ${d.area === a.l ? C.teal : C.border}`, background: d.area === a.l ? C.tealDim : C.card, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, transition: 'all .2s' }}>
-                  <span style={{ fontSize: 24 }}>{a.e}</span>
-                  <span style={{ color: d.area === a.l ? C.teal : 'rgba(0,0,0,.45)', fontSize: 12, fontWeight: 600 }}>{a.l}</span>
+                  style={{ padding: '10px 18px', borderRadius: 100, border: `1.5px solid ${d.area === a.l ? C.teal : C.border}`, background: d.area === a.l ? C.tealDim : C.card, display: 'flex', alignItems: 'center', gap: 6, transition: 'all .18s' }}>
+                  <span style={{ fontSize: 15 }}>{a.e}</span>
+                  <span style={{ color: d.area === a.l ? C.teal : 'rgba(45,45,45,.5)', fontSize: 13, fontWeight: 600 }}>{a.l}</span>
                 </button>
               ))}
             </div>
@@ -664,7 +653,7 @@ function CheckIn({ onBack, onDone }) {
             )}
             {d.area && (d.area !== 'Altro' || d.customArea?.trim()) && (
               <Btn variant="grad" onClick={submit} disabled={saving}>
-                {saving ? 'Un momento...' : 'Rifletti con Liv →'}
+                {saving ? 'Un momento...' : 'Parliamo con Liv →'}
               </Btn>
             )}
           </div>
@@ -782,56 +771,62 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
-        <button className="tap" onClick={handleBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}><Ico n="back" sz={22} c={C.muted}/></button>
-        <LogoAnimated size={40} thinking={thinking}/>
-        <div>
-          <div style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>{title || 'Liv'}</div>
-          {subtitle && <div style={{ color: C.muted, fontSize: 12 }}>{subtitle}</div>}
-        </div>
-      </div>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
 
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {msgs.map((m, i) => (
-          <div key={i} className="fu" style={{ padding: m.role === 'user' ? '16px 20px' : '20px 20px', background: m.role === 'user' ? 'transparent' : 'rgba(0,0,0,.02)', borderBottom: `1px solid ${m.role === 'assistant' ? 'rgba(0,0,0,.04)' : 'transparent'}` }}>
-            {m.role === 'assistant' ? (
-              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', maxWidth: 680, margin: '0 auto', width: '100%' }}>
-                <LogoAnimated size={28} thinking={false}/>
-                <p style={{ color: C.text, fontSize: 15, lineHeight: 1.78, whiteSpace: 'pre-wrap', flex: 1, paddingTop: 4 }}>{m.content}</p>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', maxWidth: 680, margin: '0 auto', width: '100%', flexDirection: 'row-reverse' }}>
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(0,0,0,.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2, fontSize: 12, fontWeight: 700, color: C.muted }}>Tu</div>
-                <div style={{ background: `${C.accent}12`, border: `1px solid ${C.accent}22`, borderRadius: '16px 4px 16px 16px', padding: '10px 14px', color: C.text, fontSize: 15, lineHeight: 1.72, whiteSpace: 'pre-wrap', maxWidth: '80%' }}>{m.content}</div>
-              </div>
-            )}
-          </div>
-        ))}
+      {/* Header */}
+      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+        <button className="tap" onClick={handleBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}>
+          <Ico n="back" sz={22} c={C.muted}/>
+        </button>
+        <div style={{ width: 38, height: 38, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 17, fontWeight: 400, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
+        <div style={{ flex: 1 }}>
+          <div style={{ color: C.text, fontWeight: 400, fontSize: 16, fontFamily: "'DM Serif Display',serif", lineHeight: 1.1 }}>{title || 'Liv'}</div>
+          <div style={{ color: C.muted, fontSize: 11, marginTop: 1 }}>{subtitle || 'in ascolto'}</div>
+        </div>
         {thinking && (
-          <div style={{ padding: '20px', background: 'rgba(0,0,0,.02)', borderBottom: `1px solid rgba(0,0,0,.04)` }}>
-            <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start', maxWidth: 680, margin: '0 auto', width: '100%' }}>
-              <LogoAnimated size={28} thinking={true}/>
-              <div style={{ paddingTop: 6, color: 'rgba(0,0,0,.28)', fontSize: 13, fontStyle: 'italic' }}>sta pensando…</div>
-            </div>
+          <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginRight: 4 }}>
+            {[0,1,2].map(i => <div key={i} className={`b${i}`} style={{ width: 5, height: 5, borderRadius: '50%', background: C.accent }}/>)}
           </div>
         )}
+      </div>
+
+      {/* Messaggi */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {msgs.map((m, i) => (
+          <div key={i} className={i === msgs.length - 1 ? 'fu' : ''} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8 }}>
+            {m.role === 'assistant' && (
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 400, color: '#fff', fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>L</div>
+            )}
+            <div style={{
+              maxWidth: '78%',
+              padding: '10px 14px',
+              borderRadius: m.role === 'assistant' ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
+              background: m.role === 'assistant' ? '#fff' : C.accent,
+              border: m.role === 'assistant' ? `0.5px solid ${C.border}` : 'none',
+              color: m.role === 'assistant' ? C.text : '#fff',
+              fontSize: 15,
+              lineHeight: 1.72,
+              whiteSpace: 'pre-wrap',
+            }}>{m.content || (m.role === 'assistant' && load ? <span style={{ opacity: .4 }}>…</span> : '')}</div>
+          </div>
+        ))}
         <div ref={bot}/>
       </div>
 
-      <div style={{ padding: '12px 16px 20px', background: C.bg, flexShrink: 0 }}>
-        <div style={{ maxWidth: 680, margin: '0 auto', position: 'relative', display: 'flex', alignItems: 'flex-end', background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: '6px 6px 6px 16px', gap: 8 }}>
+      {/* Input */}
+      <div style={{ padding: '10px 16px 24px', background: C.bg, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', background: C.card, borderRadius: 28, border: `0.5px solid ${C.border}`, padding: '8px 8px 8px 18px', gap: 8, boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
           <textarea ref={ta} value={inp}
             onChange={e => { si(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px' }}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
             placeholder="Scrivi un messaggio…" rows={1}
-            style={{ flex: 1, background: 'transparent', border: 'none', color: C.text, fontSize: 15, outline: 'none', resize: 'none', lineHeight: 1.6, maxHeight: 140, padding: '6px 0' }}/>
+            style={{ flex: 1, background: 'transparent', border: 'none', color: C.text, fontSize: 15, outline: 'none', resize: 'none', lineHeight: 1.6, maxHeight: 140, padding: '4px 0', fontFamily: "'DM Sans',sans-serif" }}/>
           <button className="tap" onClick={send} disabled={!inp.trim() || load}
-            style={{ width: 36, height: 36, borderRadius: 10, border: 'none', background: inp.trim() && !load ? C.accent : 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .2s', alignSelf: 'flex-end', marginBottom: 1 }}>
-            <Ico n="send" sz={16} c={inp.trim() && !load ? '#fff' : 'rgba(0,0,0,.2)'}/>
+            style={{ width: 38, height: 38, borderRadius: '50%', border: 'none', background: inp.trim() && !load ? C.accent : 'rgba(0,0,0,.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .2s', cursor: inp.trim() && !load ? 'pointer' : 'default' }}>
+            <Ico n="send" sz={15} c={inp.trim() && !load ? '#fff' : 'rgba(0,0,0,.2)'}/>
           </button>
         </div>
-        <p style={{ textAlign: 'center', color: 'rgba(0,0,0,.12)', fontSize: 10, marginTop: 8 }}>Liv può commettere errori. Non sostituisce un professionista.</p>
+        <p style={{ textAlign: 'center', color: 'rgba(0,0,0,.18)', fontSize: 10, marginTop: 7, fontWeight: 400 }}>Liv può commettere errori · Non sostituisce un professionista</p>
       </div>
     </div>
   )
@@ -1699,8 +1694,8 @@ export default function App() {
           {TABS.map(t => (
             <button key={t.id} className="tap" onClick={() => { setSeed(null); setScreen(t.id) }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, border: 'none', background: 'none', padding: '4px 0' }}>
-              <Ico n={t.icon} sz={20} c={screen === t.id ? C.accent : 'rgba(0,0,0,.25)'}/>
-              <span style={{ fontSize: 9, fontWeight: 600, color: screen === t.id ? C.accent : 'rgba(0,0,0,.2)', letterSpacing: .2 }}>{t.label}</span>
+              <Ico n={t.icon} sz={20} c={screen === t.id ? C.accent : 'rgba(45,45,45,.25)'}/>
+              <span style={{ fontSize: 9, fontWeight: 600, color: screen === t.id ? C.accent : 'rgba(45,45,45,.25)', letterSpacing: .2 }}>{t.label}</span>
             </button>
           ))}
         </div>
