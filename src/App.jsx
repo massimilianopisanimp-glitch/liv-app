@@ -82,19 +82,29 @@ const SYS_INSIGHT = `Genera insight JSON dalla conversazione:
 {"temi":["..."],"insight":"2-4 frasi calde","domanda_riflessiva":"..."}
 Se <4 scambi: {"temi":[],"insight":null,"domanda_riflessiva":null}`
 
-const SYS_FINDER = `Sei Liv, un'intelligenza artificiale. Aiuti le persone a trovare il tipo di supporto psicologico più adatto a loro.
+const SYS_FINDER_BASE = `Sei un assistente AI che aiuta le persone a trovare il tipo di professionista della salute mentale più adatto a loro. Non sei uno psicologo, non sei un terapeuta — sei uno strumento informativo. Puoi commettere errori e le tue indicazioni non sostituiscono una valutazione professionale.
+
+PROFESSIONISTI CHE CONOSCI:
+- Psicologo clinico
+- Psicoterapeuta cognitivo-comportamentale (CBT)
+- Psicoterapeuta sistemico-relazionale
+- Sessuologo
+- Psicoterapeuta psicodinamico
+- EMDR specialist
+- Psicoterapeuta della Gestalt
 
 COME LAVORI:
-- Fai domande brevi, una per volta
-- Esplora: il problema principale (ansia, relazioni, trauma, lavoro, crescita personale...), preferenza online o in presenza, preferenza di genere del terapeuta, approccio terapeutico se lo conosce
-- Se non conosce gli approcci, spiegali brevemente quando pertinente (CBT, psicoanalisi, sistemico, EMDR)
-- Dopo 4-5 scambi fornisci una raccomandazione chiara: tipo di professionista, approccio consigliato, motivazione
+1. Inizia presentandoti con esattamente queste parole: "Sono un assistente AI — non sono un professionista della salute mentale e posso commettere errori. Sono qui per aiutarti a capire quale tipo di supporto professionale potrebbe fare al caso tuo. Le mie indicazioni non sostituiscono una valutazione clinica."
+2. Fai 3-4 domande mirate e personalizzate sui bisogni dell'utente. Usa i dati che hai già (check-in, conversazioni) per non chiedere cose che conosci già.
+3. Dopo le risposte, consiglia il professionista più adatto spiegando perché.
+4. Descrivi cosa fa concretamente quel professionista in seduta e cosa aspettarsi.
+5. Chiudi sempre con: "Ricorda che questa è solo un'indicazione generale. Un primo colloquio con un professionista è il modo migliore per capire se è la scelta giusta per te."
 
 STILE:
-- Tono caldo e neutro, mai clinico
-- Mai emoji
-- Risposte brevi, massimo 3-4 frasi
-- Una sola domanda per messaggio
+- Tono caldo e chiaro, mai clinico
+- Una domanda per messaggio
+- Mai diagnosi o etichette
+- Risposte brevi e dirette
 - Usa sempre "tu"
 
 SICUREZZA:
@@ -619,25 +629,32 @@ function CheckIn({ onBack, onDone }) {
 /* ─── CHAT ──────────────────────────────────────────────────────────────── */
 function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinder, onSaveChat }) {
   const firstMsg = initMsg || 'Ciao. Sono qui. Come stai in questo momento?'
-  // Se c'è un seed, partiamo vuoti e generiamo il messaggio contestuale
-  const [msgs, sm] = useState(seed ? [] : [{ role: 'assistant', content: firstMsg }])
+  const autoStart = isFinder || !!seed
+  // Se c'è un seed o è il finder, partiamo vuoti e generiamo il messaggio contestuale
+  const [msgs, sm] = useState(autoStart ? [] : [{ role: 'assistant', content: firstMsg }])
   const [inp, si] = useState('')
   const [load, sl] = useState(false)
-  const [thinking, setThinking] = useState(!!seed)
+  const [thinking, setThinking] = useState(autoStart)
   const [seeded, setSd] = useState(false)
   const bot = useRef(null)
   const ta = useRef(null)
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, load])
   useEffect(() => {
-    if (seed && !seeded) {
+    if (!seeded && autoStart) {
       setSd(true)
       sl(true)
-      const contextSys = `${sys || SYS_CHAT}
+      let contextSys
+      if (seed) {
+        contextSys = `${sys || SYS_CHAT}
 
 CONTESTO CHECK-IN APPENA COMPLETATO: ${seed}
 
 Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intelligenza artificiale — non sono uno psicologo né un professionista della salute mentale. Sono qui per ascoltarti." Poi, nella stessa risposta, fai riferimento specifico all'emozione o all'umore registrato dall'utente e concludi con una singola domanda aperta su come sta. Massimo 3-4 frasi in totale.`
+      } else {
+        // finder auto-start: let AI present itself per its system prompt
+        contextSys = sys || SYS_CHAT
+      }
       callAI([{ role: 'user', content: '[avvia]' }], contextSys)
         .then(reply => {
           sm([{ role: 'assistant', content: reply }])
@@ -1461,6 +1478,38 @@ export default function App() {
     saveToSupabase('liv_chats', chatData)
   }
 
+  // Costruisce il system prompt del finder con il contesto dati dell'utente
+  function buildFinderSys() {
+    const lines = []
+    if (checkins.length > 0) {
+      const sorted = [...checkins].sort((a, b) => a.date > b.date ? 1 : -1)
+      const recent = sorted.slice(-20)
+      const avgMood = Math.round(recent.reduce((s, c) => s + Math.min(10, Math.max(0, c.mood || 0)), 0) / recent.length * 10) / 10
+      const emoCount = {}
+      recent.forEach(c => { if (c.emotion) emoCount[c.emotion] = (emoCount[c.emotion] || 0) + 1 })
+      const topEmos = Object.entries(emoCount).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([e]) => e)
+      const areaCount = {}
+      recent.forEach(c => { if (c.area) areaCount[c.area] = (areaCount[c.area] || 0) + 1 })
+      const topAreas = Object.entries(areaCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([a]) => a)
+      lines.push(`DATI CHECK-IN UMORE (ultimi ${recent.length}):`)
+      lines.push(`- Umore medio: ${avgMood}/10`)
+      if (topEmos.length) lines.push(`- Emozioni più frequenti: ${topEmos.join(', ')}`)
+      if (topAreas.length) lines.push(`- Aree più impattate: ${topAreas.join(', ')}`)
+    }
+    const chatsWithInsight = chats.filter(c => c.temi?.length || c.insight)
+    if (chatsWithInsight.length > 0) {
+      lines.push(`\nTEMI EMERSI NELLE CONVERSAZIONI:`)
+      chatsWithInsight.slice(-10).forEach(c => {
+        if (c.temi?.length) lines.push(`- Temi: ${c.temi.join(', ')}`)
+        if (c.insight) lines.push(`  "${c.insight.slice(0, 150)}"`)
+      })
+    }
+    const ctx = lines.length > 0
+      ? `\n\nCONTESTO UTENTE (usa questi dati per personalizzare le domande):\n${lines.join('\n')}`
+      : ''
+    return SYS_FINDER_BASE + ctx
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     setUser(null)
@@ -1516,10 +1565,9 @@ export default function App() {
           isFinder={false}/>}
         {screen === 'finder'  && <ChatView
           onBack={() => setScreen('home')}
-          sys={SYS_FINDER} accent={C.accent}
-          title="Trova il tuo psicologo"
-          subtitle="assistente matching"
-          initMsg="Ciao! Sono qui per aiutarti a trovare il professionista più adatto a te. Cosa ti ha spinto a cercare supporto psicologico?"
+          sys={buildFinderSys()} accent={C.accent}
+          title="Trova il percorso"
+          subtitle="matching professionista"
           isFinder={true}/>}
       </div>
 
