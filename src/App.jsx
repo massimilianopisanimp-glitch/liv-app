@@ -999,7 +999,7 @@ function Diario({ checkins, chats, onBack }) {
 }
 
 /* ─── AUTH SCREEN ───────────────────────────────────────────────────────── */
-function AuthScreen({ onBack, onDone }) {
+function AuthScreen({ onBack = null, onDone }) {
   const [mode, setMode] = useState('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -1043,14 +1043,14 @@ function AuthScreen({ onBack, onDone }) {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
-      {/* header */}
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-        <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}>
-          <Ico n="back" sz={22} c={C.muted}/>
-        </button>
-        <div style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Accedi a Liv</div>
-      </div>
-
+      {onBack && (
+        <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+          <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}>
+            <Ico n="back" sz={22} c={C.muted}/>
+          </button>
+          <div style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Accedi a Liv</div>
+        </div>
+      )}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 'clamp(24px,5vw,48px) clamp(20px,6vw,56px)' }} className="fu">
         <div style={{ width: '100%', maxWidth: 400 }}>
 
@@ -1214,7 +1214,7 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
 
       <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px,4vw,40px) clamp(16px,5vw,48px)' }} className="fu">
 
-        {/* Auth */}
+        {/* Account */}
         {!user ? (
           <Card style={{ marginBottom: 20 }}>
             <div style={{ textAlign: 'center' }}>
@@ -1222,7 +1222,7 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
                 <Ico n="profile" sz={26} c={C.accent}/>
               </div>
               <p style={{ color: C.text, fontWeight: 600, fontSize: 15, marginBottom: 4 }}>Salva i tuoi dati</p>
-              <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Accedi per sincronizzare i tuoi dati su tutti i dispositivi.</p>
+              <p style={{ color: C.muted, fontSize: 13, marginBottom: 16 }}>Accedi per sincronizzare check-in, conversazioni e report su Supabase.</p>
               <button className="tap" onClick={onGoAuth}
                 style={{ width: '100%', padding: '13px', borderRadius: 14, border: 'none', background: C.accent, color: '#fff', fontWeight: 700, fontSize: 15, cursor: 'pointer', boxShadow: `0 4px 14px rgba(${C.accentRgb},.3)` }}>
                 Accedi o registrati
@@ -1395,22 +1395,28 @@ export default function App() {
   const [screen, setScreen] = useState('home')
   const [seed, setSeed] = useState(null)
   const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
 
-  // Applica l'accento corrente prima di ogni render
   applyAccent(accent)
 
   // Auth Supabase
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const u = session?.user ?? null
+      setUser(u)
+      // Se c'è sessione attiva, carica da Supabase (sovrascrive localStorage)
+      if (u) loadFromSupabase(u.id).finally(() => setAuthLoading(false))
+      else   setAuthLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user && event === 'SIGNED_IN') loadFromSupabase(session.user.id)
+      const u = session?.user ?? null
+      setUser(u)
+      if (u && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) loadFromSupabase(u.id)
     })
     return () => subscription.unsubscribe()
   }, [])
 
+  // Carica tutti i dati da Supabase — fonte autoritativa quando loggato
   async function loadFromSupabase(userId) {
     try {
       const [{ data: cData }, { data: chData }, { data: rData }] = await Promise.all([
@@ -1418,20 +1424,28 @@ export default function App() {
         supabase.from('liv_chats').select('data').eq('user_id', userId).order('created_at'),
         supabase.from('liv_reports').select('data').eq('user_id', userId).order('created_at'),
       ])
-      if (cData?.length)  setCIs(cData.map(r => r.data))
-      if (chData?.length) setChats(chData.map(r => r.data))
-      if (rData?.length)  setReports(rData.map(r => r.data))
-    } catch {}
+      setCIs(cData?.map(r => r.data) ?? [])
+      setChats(chData?.map(r => r.data) ?? [])
+      setReports(rData?.map(r => r.data) ?? [])
+    } catch (e) {
+      console.warn('loadFromSupabase:', e.message)
+    }
   }
 
-  async function saveToSupabase(table, data, userId) {
-    try { await supabase.from(table).insert({ user_id: userId, data }) } catch {}
+  // Salva su Supabase solo se loggato
+  async function saveToSupabase(table, data) {
+    if (!user) return
+    try {
+      await supabase.from(table).insert({ user_id: user.id, data })
+    } catch (e) {
+      console.warn('saveToSupabase:', e.message)
+    }
   }
 
   function handleCIDone(data, s) {
     const ci = { ...data, date: new Date().toISOString().split('T')[0], id: Date.now() }
     setCIs(p => [...p, ci])
-    if (user) saveToSupabase('liv_checkins', ci, user.id)
+    saveToSupabase('liv_checkins', ci)   // no-op se non loggato
     setSeed(s)
     setScreen('chat')
   }
@@ -1439,26 +1453,39 @@ export default function App() {
   function handleReportSave(reportData) {
     const r = { ...reportData, date: new Date().toISOString().split('T')[0], id: Date.now() }
     setReports(p => [...p, r])
-    if (user) saveToSupabase('liv_reports', r, user.id)
+    saveToSupabase('liv_reports', r)
   }
 
   function handleSaveChat(chatData) {
     setChats(p => [...p, chatData])
-    if (user) saveToSupabase('liv_chats', chatData, user.id)
+    saveToSupabase('liv_chats', chatData)
   }
 
   async function handleLogout() {
     await supabase.auth.signOut()
     setUser(null)
+    // Svuota i dati dal client — al prossimo login si ricaricano da Supabase
+    setCIs([])
+    setChats([])
+    setReports([])
     setScreen('home')
   }
 
+  // 1 — Caricamento sessione
+  if (authLoading) return (
+    <div className="app-shell" style={{ alignItems: 'center', justifyContent: 'center' }}>
+      <LogoAnimated size={56} thinking={true}/>
+    </div>
+  )
+
+  // 2 — Onboarding (una sola volta, indipendente dall'auth)
   if (!onb) return (
     <div className="app-shell">
       <Onboarding done={({ name }) => { setUserName(name); setOnb(true) }}/>
     </div>
   )
 
+  // 3 — App principale (login opzionale)
   const TABS = [
     { id: 'home',    icon: 'home',    label: 'Home' },
     { id: 'assess',  icon: 'clip',    label: 'Test' },
@@ -1477,7 +1504,7 @@ export default function App() {
         {screen === 'checkin' && <CheckIn onBack={() => setScreen('home')} onDone={handleCIDone}/>}
         {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')}/>}
         {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave}/>}
-        {screen === 'auth'    && <AuthScreen onBack={() => setScreen('home')} onDone={() => setScreen('home')}/>}
+        {screen === 'auth'    && <AuthScreen onBack={() => setScreen('profile')} onDone={() => setScreen('home')}/>}
         {screen === 'profile' && <Profile checkins={checkins} chats={chats} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
         {screen === 'chat'    && <ChatView
           onBack={() => { setScreen('home'); setSeed(null) }}
