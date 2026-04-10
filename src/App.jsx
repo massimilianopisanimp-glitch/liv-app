@@ -407,7 +407,7 @@ function Onboarding({ done }) {
 }
 
 /* ─── HOME ──────────────────────────────────────────────────────────────── */
-function Home({ checkins, chats, onNav, userName }) {
+function Home({ checkins, chats, onNav, userName, user }) {
   const last = checkins[checkins.length - 1]
   const h = new Date().getHours()
   const gr = h < 5 ? 'Buona notte' : h < 12 ? 'Buongiorno' : h < 18 ? 'Buon pomeriggio' : 'Buonasera'
@@ -431,6 +431,11 @@ function Home({ checkins, chats, onNav, userName }) {
           <Ico n="profile" sz={22} c={C.accent}/>
         </button>
       </div>
+
+      {/* DEBUG TEMPORANEO */}
+      {user && <div style={{fontSize:11, color:'red', padding:'4px 8px'}}>
+        DEBUG: supabase_ci={checkins.length} | localStorage_liv_ci_v1={JSON.parse(localStorage.getItem('liv_ci_v1')||'[]').length} | localStorage_ci_v24={JSON.parse(localStorage.getItem('ci_v24')||'[]').length} | user={user?.id?.slice(0,8)}
+      </div>}
 
       {/* diario card */}
       <button className="tap" onClick={() => onNav('diario')} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0, marginBottom: 10, flexShrink: 0 }}>
@@ -495,6 +500,18 @@ function Home({ checkins, chats, onNav, userName }) {
           </button>
         ))}
       </div>
+
+      {/* DEBUG TEMPORANEO — rimuovere dopo il debug */}
+      {user && (() => {
+        let ls1 = 0, ls2 = 0
+        try { const r = localStorage.getItem('liv_ci_v1'); if (r) ls1 = (JSON.parse(r) || []).length } catch {}
+        try { const r = localStorage.getItem('ci_v24');    if (r) ls2 = (JSON.parse(r) || []).length } catch {}
+        return (
+          <div style={{ flexShrink: 0, padding: '4px 8px', fontSize: 10, color: C.muted, textAlign: 'center', fontFamily: 'monospace' }}>
+            Debug: {checkins.length} checkin Supabase · {ls1} in liv_ci_v1 · {ls2} in ci_v24
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -1589,7 +1606,7 @@ export default function App() {
     <div className="app-shell">
       {/* content */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        {screen === 'home'    && <Home checkins={checkins} chats={chats} userName={userName} onNav={s => { setSeed(null); setScreen(s) }}/>}
+        {screen === 'home'    && <Home checkins={checkins} chats={chats} userName={userName} user={user} onNav={s => { setSeed(null); setScreen(s) }}/>}
         {screen === 'checkin' && <CheckIn onBack={() => setScreen('home')} onDone={handleCIDone}/>}
         {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')}/>}
         {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave}/>}
