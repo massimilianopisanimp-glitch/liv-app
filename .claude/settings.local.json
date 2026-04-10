@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(taskkill //F //PID 20220)",
+      "Bash(taskkill //F //PID 12940)",
+      "Bash(taskkill //F //PID 10164)",
+      "Bash(npm run:*)",
+      "Bash(grep -v \"^\\\\s*//\")",
+      "Bash(git init:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

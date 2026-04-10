@@ -1,0 +1,188 @@
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.moodGrid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 600px) {
+  .moodGrid { grid-template-columns: repeat(3, 1fr); }
+}
+
+.moodBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 8px;
+  border-radius: var(--radius);
+  border: 2px solid var(--border);
+  background: var(--bg-input);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.moodBtn:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-card-hover);
+  transform: translateY(-2px);
+}
+
+.moodBtn.selected {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+}
+
+.moodEmoji {
+  font-size: 28px;
+}
+
+.moodLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.moodDesc {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.3;
+}
+
+.noteArea {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.guestNote {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.guestNote a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.savedMsg {
+  background: rgba(111, 207, 151, 0.12);
+  border: 1px solid rgba(111, 207, 151, 0.25);
+  color: #6fcf97;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Bar chart */
+.barChart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.barItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.barEmoji { font-size: 18px; flex-shrink: 0; }
+
+.barTrack {
+  flex: 1;
+  height: 10px;
+  background: var(--bg-input);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.5s ease;
+  min-width: 4px;
+}
+
+.barCount {
+  font-size: 12px;
+  color: var(--text-muted);
+  width: 24px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Log list */
+.logList {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.logTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.logItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.logItem:last-child { border-bottom: none; }
+
+.logEmoji { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+.logContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.logMood {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.logNote {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.logDate {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}

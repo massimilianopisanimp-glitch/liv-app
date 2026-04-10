@@ -1,0 +1,136 @@
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 20px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.heroTitle {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 800;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+.heroAccent {
+  color: var(--text-primary);
+}
+
+.heroSub {
+  color: var(--text-muted);
+  font-size: 16px;
+  line-height: 1.7;
+  max-width: 560px;
+}
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.welcomeBack {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.welcomeBack strong {
+  color: var(--accent);
+}
+
+/* Sections */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sectionTitle {
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* Feature cards */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.featureCard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+}
+
+.featureCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+  border-color: var(--card-color);
+}
+
+.featureIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.featureTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.featureDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  flex: 1;
+}
+
+.featureCta {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Note finale */
+.note {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
