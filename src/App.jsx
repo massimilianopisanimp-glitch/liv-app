@@ -432,11 +432,6 @@ function Home({ checkins, chats, onNav, userName, user }) {
         </button>
       </div>
 
-      {/* DEBUG TEMPORANEO */}
-      {user && <div style={{fontSize:11, color:'red', padding:'4px 8px'}}>
-        DEBUG: supabase_ci={checkins.length} | localStorage_liv_ci_v1={JSON.parse(localStorage.getItem('liv_ci_v1')||'[]').length} | localStorage_ci_v24={JSON.parse(localStorage.getItem('ci_v24')||'[]').length} | user={user?.id?.slice(0,8)}
-      </div>}
-
       {/* diario card */}
       <button className="tap" onClick={() => onNav('diario')} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0, marginBottom: 10, flexShrink: 0 }}>
         <Card style={{ width: '100%' }}>
