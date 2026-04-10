@@ -452,7 +452,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
   const padH = 'clamp(14px,4vw,40px)'
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: `${pad} ${padH} 0` }} className="fu">
+    <div style={{ height: '100%', overflowY: 'auto', padding: `${pad} ${padH} 0` }} className="fu">
 
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
@@ -503,13 +503,10 @@ function Home({ checkins, chats, onNav, userName, user }) {
         </div>
       </button>
 
-      {/* griglia 2×2 — riempie lo spazio restante */}
+      {/* griglia 2×2 */}
       <div style={{
-        flex: 1,
-        minHeight: 0,
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gridTemplateRows: '1fr 1fr',
         gap: 10,
         paddingBottom: pad,
       }}>
@@ -519,8 +516,8 @@ function Home({ checkins, chats, onNav, userName, user }) {
           { id: 'profile', icon: 'chart',   title: 'Il mio profilo',    sub: 'Trend e insight' },
           { id: 'finder',  icon: 'search',  title: 'Trova il percorso', sub: 'Supporto professionale' },
         ].map(item => (
-          <button key={item.id} className="tap" onClick={() => onNav(item.id)}
-            style={{ width: '100%', height: '100%', padding: 'clamp(12px,2vw,20px)', borderRadius: 20, border: `0.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', aspectRatio: '1' }}>
+          <button key={item.id} className="tap home-card" onClick={() => onNav(item.id)}
+            style={{ width: '100%', padding: 'clamp(12px,2vw,20px)', borderRadius: 20, border: `0.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ico n={item.icon} sz={18} c={C.accent}/>
             </div>

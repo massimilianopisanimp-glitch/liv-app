@@ -30,6 +30,12 @@ textarea,input,button,select{font-family:'DM Sans',system-ui,sans-serif}
 .tap{transition:transform .14s,opacity .14s;cursor:pointer;-webkit-tap-highlight-color:transparent}
 .tap:active{transform:scale(.95);opacity:.75}
 
+/* ─── Home grid cards ───────────────────────────────────────────── */
+.home-card { height: 140px; }
+@media (max-width: 480px) {
+  .home-card { height: auto; aspect-ratio: 1; }
+}
+
 /* ─── Range slider ───────────────────────────────────────────────── */
 input[type=range]{-webkit-appearance:none;width:100%;background:transparent}
 input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:26px;width:26px;border-radius:50%;background:#6B9080;border:3px solid #fff;cursor:pointer;margin-top:-11px;box-shadow:0 0 10px rgba(107,144,128,.3)}
