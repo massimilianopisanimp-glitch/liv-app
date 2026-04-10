@@ -153,6 +153,35 @@ async function callAI(msgs, sys) {
   return d.text || 'Riprova tra un momento.'
 }
 
+async function streamAI(msgs, sys, onChunk) {
+  const r = await fetch('/api/chat/simple', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: msgs, system: sys, stream: true }),
+  })
+  if (!r.ok) throw new Error('Errore server')
+  const reader = r.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop()
+    for (const line of lines) {
+      if (!line.startsWith('data: ')) continue
+      const data = line.slice(6)
+      if (data === '[DONE]') return
+      try {
+        const parsed = JSON.parse(data)
+        if (parsed.error) throw new Error(parsed.error)
+        if (parsed.text) onChunk(parsed.text)
+      } catch (e) { if (e.message !== 'Unexpected token') throw e }
+    }
+  }
+}
+
 /* ─── LOGO ─────────────────────────────────────────────────────────────── */
 function Logo({ size = 28 }) {
   const r = Math.round(size * 0.28)
@@ -667,17 +696,19 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         // finder auto-start: let AI present itself per its system prompt
         contextSys = sys || SYS_CHAT
       }
-      callAI([{ role: 'user', content: '[avvia]' }], contextSys)
-        .then(reply => {
-          sm([{ role: 'assistant', content: reply }])
-          setThinking(false)
-          sl(false)
+      sm([{ role: 'assistant', content: '' }])
+      setThinking(false)
+      streamAI([{ role: 'user', content: '[avvia]' }], contextSys, chunk => {
+        sm(p => {
+          const u = [...p]
+          u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chunk }
+          return u
         })
+      })
         .catch(() => {
           sm([{ role: 'assistant', content: firstMsg }])
-          setThinking(false)
-          sl(false)
         })
+        .finally(() => { sl(false) })
     }
   }, [])
 
@@ -690,12 +721,30 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
     setThinking(true)
     try {
       const safe = SAFETY.some(p => p.test(text))
-      const reply = safe
-        ? 'Sento molta sofferenza nelle tue parole. Se sei in pericolo chiama subito il **112**. Sono qui con te.'
-        : await callAI(next, sys || SYS_CHAT)
-      sm(p => [...p, { role: 'assistant', content: reply }])
+      if (safe) {
+        sm(p => [...p, { role: 'assistant', content: 'Sento molta sofferenza nelle tue parole. Se sei in pericolo chiama subito il **112**. Sono qui con te.' }])
+      } else {
+        sm(p => [...p, { role: 'assistant', content: '' }])
+        setThinking(false)
+        await streamAI(next, sys || SYS_CHAT, chunk => {
+          sm(p => {
+            const u = [...p]
+            u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chunk }
+            return u
+          })
+        })
+      }
     } catch {
-      sm(p => [...p, { role: 'assistant', content: "Mi dispiace, c'è stato un errore. Riprova." }])
+      sm(p => {
+        const u = [...p]
+        const last = u[u.length - 1]
+        if (last?.role === 'assistant' && last.content === '') {
+          u[u.length - 1] = { role: 'assistant', content: "Mi dispiace, c'è stato un errore. Riprova." }
+        } else {
+          u.push({ role: 'assistant', content: "Mi dispiace, c'è stato un errore. Riprova." })
+        }
+        return u
+      })
     }
     sl(false)
     setThinking(false)
