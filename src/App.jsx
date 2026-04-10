@@ -1580,6 +1580,20 @@ export default function App() {
   }
 
   // Costruisce il system prompt del finder con il contesto dati dell'utente
+  function buildChatSys() {
+    const recent = [...chats]
+      .sort((a, b) => (a.date > b.date ? 1 : -1))
+      .slice(-5)
+    if (recent.length === 0) return SYS_CHAT
+    const lines = recent.map(c => {
+      const temiStr = c.temi?.length ? `Temi: ${c.temi.join(', ')}. ` : ''
+      const insightStr = c.insight ? `"${c.insight.slice(0, 150)}"` : (c.preview ? `"${c.preview.slice(0, 150)}"` : '')
+      return `[${c.date}] - ${temiStr}${insightStr}`
+    })
+    const ctx = `\n\nCONVERSAZIONI PRECEDENTI (usa questo contesto per personalizzare le risposte):\n${lines.join('\n')}`
+    return SYS_CHAT + ctx
+  }
+
   function buildFinderSys() {
     const lines = []
     if (checkins.length > 0) {
@@ -1659,7 +1673,7 @@ export default function App() {
         {screen === 'chat'    && <ChatView
           onBack={() => { setScreen('home'); setSeed(null) }}
           onSaveChat={handleSaveChat}
-          seed={seed} sys={SYS_CHAT}
+          seed={seed} sys={buildChatSys()}
           accent={C.teal}
           title="Liv" subtitle="in ascolto"
           initMsg="Sono Liv, un'intelligenza artificiale — non sono uno psicologo né un professionista della salute mentale. Sono qui per ascoltarti e aiutarti a riflettere. Come stai oggi?"
