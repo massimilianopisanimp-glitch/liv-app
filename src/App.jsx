@@ -1435,28 +1435,68 @@ export default function App() {
 
   // Carica tutti i dati da Supabase — fonte autoritativa quando loggato
   async function loadFromSupabase(userId) {
-    try {
-      const [{ data: cData }, { data: chData }, { data: rData }] = await Promise.all([
-        supabase.from('liv_checkins').select('data').eq('user_id', userId).order('created_at'),
-        supabase.from('liv_chats').select('data').eq('user_id', userId).order('created_at'),
-        supabase.from('liv_reports').select('data').eq('user_id', userId).order('created_at'),
-      ])
-      setCIs(cData?.map(r => r.data) ?? [])
-      setChats(chData?.map(r => r.data) ?? [])
-      setReports(rData?.map(r => r.data) ?? [])
-    } catch (e) {
-      console.warn('loadFromSupabase:', e.message)
+    console.log('[Supabase] loadFromSupabase userId:', userId)
+    const [ciRes, chRes, rRes] = await Promise.all([
+      supabase.from('liv_checkins').select('data').eq('user_id', userId).order('created_at'),
+      supabase.from('liv_chats').select('data').eq('user_id', userId).order('created_at'),
+      supabase.from('liv_reports').select('data').eq('user_id', userId).order('created_at'),
+    ])
+    console.log('[Supabase] checkins:', ciRes.data, ciRes.error)
+    console.log('[Supabase] chats:', chRes.data, chRes.error)
+    console.log('[Supabase] reports:', rRes.data, rRes.error)
+    if (ciRes.error) console.error('[Supabase] errore checkins:', ciRes.error.message)
+    if (chRes.error) console.error('[Supabase] errore chats:', chRes.error.message)
+    if (rRes.error)  console.error('[Supabase] errore reports:', rRes.error.message)
+
+    // Migrazione localStorage → Supabase
+    // Se Supabase non ha check-in, cerca nei vecchi storage locali e migra
+    const remoteCheckins = ciRes.data?.map(r => r.data) ?? []
+    if (remoteCheckins.length === 0) {
+      const legacyKeys = ['ci_v24', 'liv_ci_v1']
+      let migrated = []
+      for (const key of legacyKeys) {
+        try {
+          const raw = localStorage.getItem(key)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              migrated = parsed
+              console.log(`[Supabase] migrazione da localStorage key "${key}": ${parsed.length} check-in trovati`)
+              break
+            }
+          }
+        } catch {}
+      }
+      if (migrated.length > 0) {
+        // Carica subito nello stato
+        setCIs(migrated)
+        // Salva su Supabase in background
+        Promise.all(migrated.map(ci => supabase.from('liv_checkins').insert({ user_id: userId, data: ci })))
+          .then(results => {
+            const errors = results.filter(r => r.error)
+            if (errors.length === 0) {
+              // Migrazione riuscita: rimuovi le chiavi legacy
+              localStorage.removeItem('ci_v24')
+              localStorage.removeItem('liv_ci_v1')
+              console.log('[Supabase] migrazione completata, localStorage pulito')
+            } else {
+              console.error('[Supabase] errori durante migrazione:', errors.map(r => r.error?.message))
+            }
+          })
+      }
+    } else {
+      setCIs(remoteCheckins)
     }
+
+    setChats(chRes.data?.map(r => r.data) ?? [])
+    setReports(rRes.data?.map(r => r.data) ?? [])
   }
 
   // Salva su Supabase solo se loggato
   async function saveToSupabase(table, data) {
     if (!user) return
-    try {
-      await supabase.from(table).insert({ user_id: user.id, data })
-    } catch (e) {
-      console.warn('saveToSupabase:', e.message)
-    }
+    const { error } = await supabase.from(table).insert({ user_id: user.id, data })
+    if (error) console.error('[Supabase] errore insert in', table, ':', error.message)
   }
 
   function handleCIDone(data, s) {
