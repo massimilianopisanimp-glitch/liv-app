@@ -7,7 +7,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { messages, system, stream: useStream } = req.body
+  const { messages, system, stream: useStream, model: reqModel } = req.body
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Messaggi non validi' })
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const opts = {
-    model: 'claude-sonnet-4-20250514',
+    model: reqModel || 'claude-sonnet-4-20250514',
     max_tokens: 1024,
     messages: messages.map(m => ({ role: m.role, content: m.content })),
   }

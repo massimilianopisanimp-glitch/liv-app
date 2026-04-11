@@ -128,7 +128,7 @@ Formato richiesto:
 {"schemi":["stringa 1","stringa 2","stringa 3"],"sintesi":"2-3 frasi calde","domanda":"una domanda riflessiva personalizzata"}
 
 REGOLE:
-- "schemi": array di 2-4 pattern cognitivi/emotivi ricorrenti che emergono dai dati. Linguaggio caldo, concreto, in prima persona (es. "Tendi a sentirti sopraffatto/a quando..."). Mai diagnosi, mai etichette cliniche.
+- "schemi": array di massimo 3 pattern cognitivi/emotivi ricorrenti che emergono dai dati. Linguaggio caldo, concreto, in prima persona (es. "Tendi a sentirti sopraffatto/a quando..."). Mai diagnosi, mai etichette cliniche.
 - "sintesi": 2-3 frasi che descrivono il periodo emotivo dell'utente in modo caldo e non giudicante.
 - "domanda": una sola domanda riflessiva personalizzata basata sugli schemi identificati.
 - Se i dati sono insufficienti (meno di 3 check-in): {"schemi":[],"sintesi":null,"domanda":null}
@@ -149,11 +149,11 @@ function useStore(k, init) {
 }
 
 /* ─── API ──────────────────────────────────────────────────────────────── */
-async function callAI(msgs, sys) {
+async function callAI(msgs, sys, model) {
   const r = await fetch('/api/chat/simple', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages: msgs, system: sys }),
+    body: JSON.stringify({ messages: msgs, system: sys, ...(model ? { model } : {}) }),
   })
   const d = await r.json()
   if (d.error) throw new Error(d.error)
@@ -1269,7 +1269,7 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
 
     const ctx = `CHECK-IN DELL'UMORE (più recenti prima):\n${ciSummary}${chatSummary ? `\n\nTEMI DELLE CONVERSAZIONI:\n${chatSummary}` : ''}`
 
-    callAI([{ role: 'user', content: ctx }], SYS_PROFILE)
+    callAI([{ role: 'user', content: ctx }], SYS_PROFILE, 'claude-haiku-4-5-20251001')
       .then(raw => {
         try {
           const clean = raw.replace(/```json|```/g, '').trim()
@@ -1347,114 +1347,129 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
           </div>
         </Card>
 
-        {/* Intestazione dati */}
-        <div style={{ marginBottom: 20 }}>
-          <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", marginBottom: 4 }}>{userName ? `Ciao, ${userName}` : 'Il tuo profilo'}</h2>
+        {/* Intestazione */}
+        <div style={{ marginBottom: 24 }}>
+          <h2 style={{ color: C.text, fontSize: 26, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 4, lineHeight: 1.15 }}>
+            {userName ? `Ciao, ${userName}` : 'Il tuo profilo'}
+          </h2>
           <p style={{ color: C.muted, fontSize: 13 }}>{checkins.length} check-in · {chats.length} conversazioni</p>
         </div>
 
-        {checkins.length === 0 ? (
-          <Card style={{ textAlign: 'center', padding: '36px 20px' }}>
-            <p style={{ color: C.text, fontSize: 16, fontWeight: 600, marginBottom: 8 }}>Nessun dato ancora</p>
-            <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.6 }}>Inizia con un check-in dell'umore per costruire il tuo profilo.</p>
+        {checkins.length < 3 ? (
+          <Card style={{ textAlign: 'center', padding: '40px 24px' }}>
+            <div style={{ width: 52, height: 52, borderRadius: '50%', background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Ico n="chart" sz={24} c={C.accent}/>
+            </div>
+            <p style={{ color: C.text, fontSize: 17, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 8 }}>Costruiamo insieme il tuo profilo</p>
+            <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.65, maxWidth: 280, margin: '0 auto' }}>
+              Fai almeno 3 check-in dell'umore e qualche conversazione con Liv — poi qui troverai i tuoi schemi emotivi, il trend nel tempo e una domanda riflessiva personalizzata.
+            </p>
           </Card>
         ) : <>
 
           {/* 1 — TREND EMOTIVO */}
-          <Card style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 8 }}>
+            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Trend emotivo</h3>
+            <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Andamento dell'umore nel tempo</p>
+          </div>
+          <Card style={{ marginBottom: 24 }}>
             <MoodChart checkins={sorted}/>
           </Card>
 
           {/* 2 — AREE PIÙ COINVOLTE */}
-          {topAreas.length > 0 && (
-            <Card style={{ marginBottom: 16 }}>
-              <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>Aree più coinvolte · 30 giorni</p>
+          {topAreas.length > 0 && <>
+            <div style={{ marginBottom: 8 }}>
+              <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Aree più coinvolte</h3>
+              <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Ultimi 30 giorni</p>
+            </div>
+            <Card style={{ marginBottom: 24 }}>
               {topAreas.map(([area, count], i) => {
-                const pct = Math.round((count / last30.length) * 100) || 1
+                const pct = Math.round((count / Math.max(last30.length, 1)) * 100) || 1
                 return (
-                  <div key={area} style={{ marginBottom: i < topAreas.length - 1 ? 12 : 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                  <div key={area} style={{ marginBottom: i < topAreas.length - 1 ? 14 : 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                       <span style={{ color: C.text, fontSize: 14, fontWeight: 500 }}>{area}</span>
                       <span style={{ color: C.accent, fontSize: 13, fontWeight: 600 }}>{pct}%</span>
                     </div>
                     <div style={{ height: 5, borderRadius: 3, background: C.faint, overflow: 'hidden' }}>
-                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: C.accent, transition: 'width .6s ease' }}/>
+                      <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: C.accent, transition: 'width .8s ease' }}/>
                     </div>
                   </div>
                 )
               })}
             </Card>
-          )}
+          </>}
 
           {/* 3 — EMOZIONI FREQUENTI */}
-          {topEmos.length > 0 && (
-            <Card style={{ marginBottom: 16 }}>
-              <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 12 }}>Emozioni più frequenti · 30 giorni</p>
+          {topEmos.length > 0 && <>
+            <div style={{ marginBottom: 8 }}>
+              <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Emozioni frequenti</h3>
+              <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Ultimi 30 giorni</p>
+            </div>
+            <Card style={{ marginBottom: 24 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {topEmos.map(([emo], i) => (
-                  <div key={emo} style={{ background: i === 0 ? C.accent : C.accentDim, color: i === 0 ? '#fff' : C.text, padding: '7px 14px', borderRadius: 20, fontSize: 13, fontWeight: 600 }}>{emo}</div>
+                  <div key={emo} style={{ background: i === 0 ? C.accent : C.accentDim, color: i === 0 ? '#fff' : C.text, padding: '7px 16px', borderRadius: 100, fontSize: 13, fontWeight: 600 }}>{emo}</div>
                 ))}
               </div>
             </Card>
-          )}
+          </>}
 
           {/* 4 — ANALISI AI */}
-          {checkins.length < 3 ? (
-            <Card style={{ marginBottom: 16, background: C.amberDim, border: `1px solid ${C.amber}22` }}>
-              <p style={{ color: C.amber, fontSize: 13, fontWeight: 600, marginBottom: 4 }}>Serve ancora un po'</p>
-              <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 13, lineHeight: 1.6 }}>Fai almeno 3 check-in per sbloccare l'analisi degli schemi con Liv.</p>
-            </Card>
-          ) : analysisLoading ? (
-            <Card style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
-                <LogoAnimated size={32} thinking={true}/>
+          <div style={{ marginBottom: 8 }}>
+            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Schemi di pensiero ricorrenti</h3>
+            <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Analisi generata da Liv</p>
+          </div>
+
+          {analysisLoading ? (
+            <Card style={{ marginBottom: 24 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0' }}>
+                <div style={{ display: 'flex', gap: 5 }}>
+                  {[0,1,2].map(i => <div key={i} className={`b${i}`} style={{ width: 7, height: 7, borderRadius: '50%', background: C.accent }}/>)}
+                </div>
                 <div>
-                  <p style={{ color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 2 }}>Liv sta analizzando i tuoi dati…</p>
+                  <p style={{ color: C.text, fontSize: 14, fontWeight: 500, marginBottom: 2 }}>Liv sta analizzando i tuoi dati…</p>
                   <p style={{ color: C.muted, fontSize: 12 }}>Pochi secondi</p>
                 </div>
               </div>
             </Card>
           ) : analysisErr ? (
-            <Card style={{ marginBottom: 16 }}>
+            <Card style={{ marginBottom: 24 }}>
               <p style={{ color: C.muted, fontSize: 13 }}>Non è stato possibile generare l'analisi. Riprova più tardi.</p>
             </Card>
-          ) : analysis && (
-            <>
-              {/* Sintesi */}
-              {analysis.sintesi && (
-                <Card style={{ marginBottom: 16, background: `linear-gradient(135deg,${C.accentDim},${C.faint})`, border: `1px solid ${C.accent}18` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                    <LogoAnimated size={24} thinking={false}/>
-                    <span style={{ color: C.accent, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8 }}>Lettura del periodo</span>
-                  </div>
-                  <p style={{ color: C.text, fontSize: 14, lineHeight: 1.75 }}>{analysis.sintesi}</p>
-                </Card>
-              )}
-
-              {/* Schemi ricorrenti */}
-              {analysis.schemi?.length > 0 && (
-                <Card style={{ marginBottom: 16 }}>
-                  <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>Schemi di pensiero ricorrenti</p>
-                  {analysis.schemi.map((s, i) => (
-                    <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < analysis.schemi.length - 1 ? 14 : 0, alignItems: 'flex-start' }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 8, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
-                        <span style={{ color: C.accent, fontSize: 12, fontWeight: 700 }}>{i + 1}</span>
-                      </div>
-                      <p style={{ color: C.text, fontSize: 14, lineHeight: 1.65, margin: 0 }}>{s}</p>
+          ) : analysis && <>
+            {analysis.schemi?.length > 0 && (
+              <Card style={{ marginBottom: 16 }}>
+                {analysis.schemi.map((s, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 14, marginBottom: i < analysis.schemi.length - 1 ? 18 : 0, alignItems: 'flex-start' }}>
+                    <div style={{ width: 26, height: 26, borderRadius: 8, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                      <span style={{ color: C.accent, fontSize: 11, fontWeight: 700 }}>{i + 1}</span>
                     </div>
-                  ))}
-                </Card>
-              )}
+                    <p style={{ color: C.text, fontSize: 14, lineHeight: 1.7, margin: 0 }}>{s}</p>
+                  </div>
+                ))}
+              </Card>
+            )}
 
-              {/* Domanda riflessiva */}
-              {analysis.domanda && (
-                <div style={{ marginBottom: 16, padding: '20px', borderRadius: 20, background: C.accentDim, border: `1px solid ${C.accent}20` }}>
-                  <p style={{ color: C.muted, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 10 }}>Domanda per te</p>
-                  <p style={{ color: C.text, fontSize: 16, lineHeight: 1.7, fontFamily: "'DM Serif Display',serif" }}>"{analysis.domanda}"</p>
+            {/* Sintesi */}
+            {analysis.sintesi && (
+              <Card style={{ marginBottom: 16, background: `linear-gradient(135deg,${C.accentDim},${C.faint})`, border: `0.5px solid ${C.accent}20` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                  <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
+                  <span style={{ color: C.accent, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8 }}>Lettura del periodo</span>
                 </div>
-              )}
-            </>
-          )}
+                <p style={{ color: C.text, fontSize: 14, lineHeight: 1.75 }}>{analysis.sintesi}</p>
+              </Card>
+            )}
+
+            {/* Domanda riflessiva */}
+            {analysis.domanda && (
+              <div style={{ marginBottom: 24, padding: '22px 20px', borderRadius: 20, background: C.accentDim, border: `0.5px solid ${C.accent}25` }}>
+                <p style={{ color: C.accent, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 12 }}>Domanda riflessiva</p>
+                <p style={{ color: C.text, fontSize: 18, lineHeight: 1.6, fontFamily: "'DM Serif Display',serif", fontWeight: 400 }}>"{analysis.domanda}"</p>
+              </div>
+            )}
+          </>}
         </>}
       </div>
     </div>
