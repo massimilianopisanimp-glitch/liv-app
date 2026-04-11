@@ -768,40 +768,48 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
     const userMsgs = msgs.filter(m => m.role === 'user')
     console.log('[handleBack] userMsgs:', userMsgs.length, '| isFinder:', isFinder, '| onSaveChat:', !!onSaveChat)
     if (!isFinder && userMsgs.length >= 2 && onSaveChat) {
-      try {
-        console.log('[handleBack] chiamo haiku per estrazione...')
-        const raw = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
-        console.log('[handleBack] risposta haiku raw:', raw)
-        let parsed = {}
+      const chatId = Date.now()
+      const preview = userMsgs[0]?.content?.slice(0, 100) || ''
+
+      async function extractWithRetry() {
         try {
-          parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
-          console.log('[handleBack] parsed:', parsed)
-        } catch (parseErr) {
-          console.error('[handleBack] errore parsing JSON:', parseErr.message, '| raw:', raw)
+          console.log('[handleBack] chiamo haiku per estrazione...')
+          const raw = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
+          console.log('[handleBack] risposta haiku raw:', raw)
+          return JSON.parse(raw.replace(/```json|```/g, '').trim())
+        } catch (err) {
+          console.warn('[handleBack] primo tentativo fallito:', err.message, '— retry tra 2s')
+          await new Promise(r => setTimeout(r, 2000))
+          try {
+            const raw2 = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
+            console.log('[handleBack] retry risposta raw:', raw2)
+            return JSON.parse(raw2.replace(/```json|```/g, '').trim())
+          } catch (err2) {
+            console.error('[handleBack] retry fallito:', err2.message)
+            return {}
+          }
         }
-        const chatId = Date.now()
-        const preview = userMsgs[0]?.content?.slice(0, 100) || ''
-        const chatData = {
-          date: new Date().toISOString().split('T')[0],
-          id: chatId,
-          msgCount: msgs.length,
-          preview,
-          temi: parsed.temi || [],
-          insight: parsed.insight || null,
-          domanda_riflessiva: parsed.domanda_riflessiva || null,
-        }
-        console.log('[handleBack] chiamo onSaveChat con:', chatData)
-        onSaveChat(chatData)
-        // Auto check-in immediato se emotion estratta
-        if (onAutoCI && parsed.emotion && parsed.intensity && parsed.area) {
-          console.log('[handleBack] creo auto check-in:', parsed.emotion, parsed.intensity, parsed.area)
-          onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId })
-          markChatProcessed(chatId)
-          setToast(true)
-          setTimeout(() => setToast(false), 3000)
-        }
-      } catch (err) {
-        console.error('[handleBack] errore generale:', err.message)
+      }
+
+      const parsed = await extractWithRetry()
+      console.log('[handleBack] parsed:', parsed)
+
+      const chatData = {
+        date: new Date().toISOString().split('T')[0],
+        id: chatId, msgCount: msgs.length, preview,
+        temi: parsed.temi || [],
+        insight: parsed.insight || null,
+        domanda_riflessiva: parsed.domanda_riflessiva || null,
+      }
+      console.log('[handleBack] chiamo onSaveChat con:', chatData)
+      onSaveChat(chatData)
+
+      if (onAutoCI && parsed.emotion && parsed.intensity && parsed.area) {
+        console.log('[handleBack] creo auto check-in:', parsed.emotion, parsed.intensity, parsed.area)
+        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId })
+        markChatProcessed(chatId)
+        setToast(true)
+        setTimeout(() => setToast(false), 3000)
       }
     }
     onBack()
