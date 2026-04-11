@@ -767,7 +767,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
   async function handleBack() {
     const userMsgs = msgs.filter(m => m.role === 'user')
     console.log('[handleBack] userMsgs:', userMsgs.length, '| isFinder:', isFinder, '| onSaveChat:', !!onSaveChat)
-    if (!isFinder && userMsgs.length >= 2 && onSaveChat) {
+    if (!isFinder && userMsgs.length >= 1 && onSaveChat) {
       const chatId = Date.now()
       const preview = userMsgs[0]?.content?.slice(0, 100) || ''
 
@@ -1077,7 +1077,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
       c.id &&
       !processed.has(String(c.id)) &&
       !existing.includes(String(c.id)) &&
-      (c.msgCount || 0) >= 3 &&
+      (c.msgCount || 0) >= 1 &&
       (c.temi?.length > 0 || c.insight)
     )
     if (toProcess.length === 0) return
