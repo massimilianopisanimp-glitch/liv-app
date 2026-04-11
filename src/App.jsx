@@ -772,20 +772,23 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       const preview = userMsgs[0]?.content?.slice(0, 100) || ''
 
       async function extractWithRetry() {
-        const models = ['claude-haiku-4-5', 'claude-sonnet-4-20250514']
-        for (const model of models) {
+        try {
+          console.log('[handleBack] chiamo sonnet per estrazione...')
+          const raw = await callAI(msgs, SYS_INSIGHT, 'claude-sonnet-4-20250514')
+          console.log('[handleBack] risposta raw:', raw)
+          return JSON.parse(raw.replace(/```json|```/g, '').trim())
+        } catch (err) {
+          console.warn('[handleBack] primo tentativo fallito:', err.message, '— retry tra 2s')
+          await new Promise(r => setTimeout(r, 2000))
           try {
-            console.log('[handleBack] chiamo', model, 'per estrazione...')
-            const raw = await callAI(msgs, SYS_INSIGHT, model)
-            console.log('[handleBack] risposta raw:', raw)
-            return JSON.parse(raw.replace(/```json|```/g, '').trim())
-          } catch (err) {
-            console.warn('[handleBack]', model, 'fallito:', err.message, '— provo modello successivo tra 2s')
-            await new Promise(r => setTimeout(r, 2000))
+            const raw2 = await callAI(msgs, SYS_INSIGHT, 'claude-sonnet-4-20250514')
+            console.log('[handleBack] retry risposta raw:', raw2)
+            return JSON.parse(raw2.replace(/```json|```/g, '').trim())
+          } catch (err2) {
+            console.error('[handleBack] retry fallito:', err2.message)
+            return {}
           }
         }
-        console.error('[handleBack] tutti i modelli falliti')
-        return {}
       }
 
       const parsed = await extractWithRetry()
