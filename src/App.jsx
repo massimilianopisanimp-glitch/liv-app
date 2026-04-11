@@ -85,7 +85,7 @@ Se l'utente esprime pensieri suicidari o autolesionismo:
 → "Quello che mi stai dicendo è importante. Ti chiedo di contattare il Telefono Amico al 02 2327 2327 o il 112. Non sei solo/a."
 → Non continuare la conversazione normale.`
 
-const SYS_INSIGHT = `Analizza questa conversazione e rispondi SOLO con JSON: {"temi":["tema1","tema2"],"insight":"frase riassuntiva","emotion":"emozione prevalente","intensity":5,"area":"area di vita","domanda_riflessiva":"domanda"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro. Se meno di 3 messaggi utente: {"temi":[],"insight":null,"emotion":null,"intensity":null,"area":null,"domanda_riflessiva":null}`
+const SYS_INSIGHT = `Analizza questa conversazione e rispondi ESCLUSIVAMENTE con un oggetto JSON valido, senza testo aggiuntivo prima o dopo. Formato esatto: {"temi":["tema1","tema2"],"insight":"frase riassuntiva in italiano","domanda_riflessiva":"domanda in italiano","emotion":"emozione prevalente","intensity":7,"area":"area di vita"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro. Se non ci sono dati sufficienti restituisci: {"temi":[],"insight":null,"domanda_riflessiva":null,"emotion":null,"intensity":null,"area":null}`
 
 const SYS_AUTO_CHECKIN = `Analizza questa conversazione e restituisci SOLO un oggetto JSON valido, senza testo aggiuntivo, senza markdown, senza backtick.
 Formato: {"emotion":"EMOZIONE","intensity":N,"area":"AREA"}
