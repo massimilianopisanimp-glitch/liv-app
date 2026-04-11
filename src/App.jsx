@@ -89,6 +89,13 @@ const SYS_INSIGHT = `Genera insight JSON dalla conversazione:
 {"temi":["..."],"insight":"2-4 frasi calde","domanda_riflessiva":"..."}
 Se <4 scambi: {"temi":[],"insight":null,"domanda_riflessiva":null}`
 
+const SYS_AUTO_CHECKIN = `Analizza questa conversazione e restituisci SOLO un oggetto JSON valido, senza testo aggiuntivo, senza markdown, senza backtick.
+Formato: {"emotion":"EMOZIONE","intensity":N,"area":"AREA"}
+- emotion: scegli UNA tra [Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro]
+- intensity: numero intero da 1 a 10 (intensità emotiva complessiva della conversazione)
+- area: scegli UNA tra [Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro]
+Rispondi SOLO con il JSON, nessun altro testo.`
+
 const SYS_FINDER_BASE = `Sei un assistente AI che aiuta le persone a trovare il tipo di professionista della salute mentale più adatto a loro. Non sei uno psicologo, non sei un terapeuta — sei uno strumento informativo. Puoi commettere errori e le tue indicazioni non sostituiscono una valutazione professionale.
 
 PROFESSIONISTI CHE CONOSCI:
@@ -661,7 +668,7 @@ function CheckIn({ onBack, onDone }) {
 }
 
 /* ─── CHAT ──────────────────────────────────────────────────────────────── */
-function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinder, onSaveChat }) {
+function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinder, onSaveChat, onAutoCI }) {
   const firstMsg = initMsg || 'Ciao. Sono qui. Come stai in questo momento?'
   const autoStart = isFinder || !!seed
   // Se c'è un seed o è il finder, partiamo vuoti e generiamo il messaggio contestuale
@@ -670,8 +677,10 @@ function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinde
   const [load, sl] = useState(false)
   const [thinking, setThinking] = useState(autoStart)
   const [seeded, setSd] = useState(false)
+  const [toast, setToast] = useState(false)
   const bot = useRef(null)
   const ta = useRef(null)
+  const lastAutoCIAt = useRef(0) // numero di msg utente all'ultimo auto-CI
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, load])
   useEffect(() => {
@@ -704,6 +713,20 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         .finally(() => { sl(false) })
     }
   }, [])
+
+  async function doAutoCI(currentMsgs) {
+    if (isFinder || !onAutoCI) return
+    try {
+      const raw = await callAI(currentMsgs, SYS_AUTO_CHECKIN, 'claude-haiku-4-5-20251001')
+      const clean = raw.replace(/```json|```/g, '').trim()
+      const parsed = JSON.parse(clean)
+      if (parsed.emotion && parsed.intensity && parsed.area) {
+        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area })
+        setToast(true)
+        setTimeout(() => setToast(false), 3000)
+      }
+    } catch { /* silenzioso */ }
+  }
 
   async function run(text, base) {
     const cur = base || msgs
@@ -741,6 +764,12 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
     }
     sl(false)
     setThinking(false)
+    // Auto check-in ogni 5 messaggi utente
+    const uCount = [...next, ...[]].filter(m => m.role === 'user').length
+    if (!isFinder && uCount > 0 && uCount % 5 === 0 && uCount > lastAutoCIAt.current) {
+      lastAutoCIAt.current = uCount
+      doAutoCI(next)
+    }
   }
 
   async function send() {
@@ -751,24 +780,32 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
 
   async function handleBack() {
     const userMsgs = msgs.filter(m => m.role === 'user')
-    if (!isFinder && onSaveChat && userMsgs.length >= 2) {
-      try {
-        const insightRaw = await callAI(msgs, SYS_INSIGHT)
-        let temi = [], insight = null, domanda = null
+    if (!isFinder && userMsgs.length >= 2) {
+      // Auto check-in alla chiusura se non già fatto
+      if (onAutoCI && userMsgs.length > lastAutoCIAt.current) {
+        lastAutoCIAt.current = userMsgs.length
+        doAutoCI(msgs) // fire-and-forget, non blocca il back
+      }
+      // Salva insight chat
+      if (onSaveChat) {
         try {
-          const clean = insightRaw.replace(/```json|```/g, '').trim()
-          const parsed = JSON.parse(clean)
-          temi = parsed.temi || []; insight = parsed.insight; domanda = parsed.domanda_riflessiva
+          const insightRaw = await callAI(msgs, SYS_INSIGHT)
+          let temi = [], insight = null, domanda = null
+          try {
+            const clean = insightRaw.replace(/```json|```/g, '').trim()
+            const parsed = JSON.parse(clean)
+            temi = parsed.temi || []; insight = parsed.insight; domanda = parsed.domanda_riflessiva
+          } catch {}
+          const preview = userMsgs[0]?.content?.slice(0, 100) || ''
+          onSaveChat({ date: new Date().toISOString().split('T')[0], id: Date.now(), msgCount: msgs.length, preview, temi, insight, domanda_riflessiva: domanda })
         } catch {}
-        const preview = userMsgs[0]?.content?.slice(0, 100) || ''
-        onSaveChat({ date: new Date().toISOString().split('T')[0], id: Date.now(), msgCount: msgs.length, preview, temi, insight, domanda_riflessiva: domanda })
-      } catch {}
+      }
     }
     onBack()
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg, position: 'relative' }}>
 
       {/* Header */}
       <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
@@ -809,6 +846,13 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         ))}
         <div ref={bot}/>
       </div>
+
+      {/* Toast auto check-in */}
+      {toast && (
+        <div style={{ position: 'absolute', bottom: 90, left: '50%', transform: 'translateX(-50%)', background: 'rgba(45,45,45,.85)', color: '#fff', fontSize: 12, fontWeight: 500, padding: '8px 18px', borderRadius: 100, whiteSpace: 'nowrap', pointerEvents: 'none', zIndex: 10 }}>
+          Check-in salvato automaticamente
+        </div>
+      )}
 
       {/* Input */}
       <div style={{ padding: '10px 16px 24px', background: C.bg, flexShrink: 0 }}>
@@ -1588,6 +1632,12 @@ export default function App() {
     saveToSupabase('liv_reports', r)
   }
 
+  function handleAutoCI(ciData) {
+    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: ciData.emotionInt }
+    setCIs(p => [...p, ci])
+    saveToSupabase('liv_checkins', ci)
+  }
+
   function handleSaveChat(chatData) {
     setChats(p => [...p, chatData])
     saveToSupabase('liv_chats', chatData)
@@ -1687,6 +1737,7 @@ export default function App() {
         {screen === 'chat'    && <ChatView
           onBack={() => { setScreen('home'); setSeed(null) }}
           onSaveChat={handleSaveChat}
+          onAutoCI={handleAutoCI}
           seed={seed} sys={buildChatSys()}
           accent={C.teal}
           title="Liv" subtitle="in ascolto"
