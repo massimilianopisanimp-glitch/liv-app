@@ -141,6 +141,15 @@ REGOLE:
 - Se i dati sono insufficienti (meno di 3 check-in): {"schemi":[],"sintesi":null,"domanda":null}
 - Rispondi SOLO con il JSON, nessun altro testo.`
 
+/* ─── PROCESSED CHAT IDS (per evitare doppi auto check-in) ─────────────── */
+function getProcessedChatIds() {
+  try { return new Set(JSON.parse(localStorage.getItem('liv_ci_processed') || '[]')) } catch { return new Set() }
+}
+function markChatProcessed(chatId) {
+  const s = getProcessedChatIds(); s.add(String(chatId))
+  try { localStorage.setItem('liv_ci_processed', JSON.stringify([...s])) } catch {}
+}
+
 /* ─── STORAGE (localStorage) ───────────────────────────────────────────── */
 function useStore(k, init) {
   const key = 'liv_' + k
@@ -1056,7 +1065,41 @@ function Assessment({ onBack, onSaveReport }) {
 }
 
 /* ─── DIARIO ────────────────────────────────────────────────────────────── */
-function Diario({ checkins, chats, onBack }) {
+function Diario({ checkins, chats, onBack, onAutoCI }) {
+  // Auto check-in per chat esistenti non ancora processate
+  useEffect(() => {
+    if (!onAutoCI) return
+    const processed = getProcessedChatIds()
+    const existing = checkins.filter(c => c.auto).map(c => String(c.chatId)).filter(Boolean)
+    const toProcess = chats.filter(c =>
+      c.id &&
+      !processed.has(String(c.id)) &&
+      !existing.includes(String(c.id)) &&
+      (c.msgCount || 0) >= 3 &&
+      (c.temi?.length > 0 || c.insight)
+    )
+    if (toProcess.length === 0) return
+    // Processa sequenzialmente in background, 1 alla volta, con pausa 800ms
+    ;(async () => {
+      for (const chat of toProcess) {
+        markChatProcessed(chat.id)
+        const text = [
+          chat.temi?.length ? `Argomenti: ${chat.temi.join(', ')}.` : '',
+          chat.insight ? `Sintesi: ${chat.insight}` : '',
+          chat.preview ? `Primo messaggio: "${chat.preview}"` : '',
+        ].filter(Boolean).join(' ')
+        try {
+          const raw = await callAI([{ role: 'user', content: text }], SYS_AUTO_CHECKIN, 'claude-haiku-4-5-20251001')
+          const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
+          if (parsed.emotion && parsed.intensity && parsed.area) {
+            onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId: chat.id })
+          }
+        } catch { /* silenzioso */ }
+        await new Promise(r => setTimeout(r, 800))
+      }
+    })()
+  }, [])
+
   const allEvents = [
     ...checkins.map(c => ({ ...c, type: 'checkin', sortTs: c.id || new Date(c.date + 'T00:00:00').getTime() })),
     ...chats.map(c => ({ ...c, type: 'chat',    sortTs: c.id || new Date(c.date + 'T00:00:00').getTime() })),
@@ -1619,7 +1662,15 @@ export default function App() {
       setCIs(remoteCheckins)
     }
 
-    setChats(chRes.data?.map(r => r.data) ?? [])
+    // Dedup chat per date + preview (stessa chat salvata più volte)
+    const rawChats = chRes.data?.map(r => r.data) ?? []
+    const seenChats = new Set()
+    const dedupedChats = rawChats.filter(c => {
+      const key = `${c.date}|${(c.preview || '').slice(0, 50)}|${c.msgCount || 0}`
+      if (seenChats.has(key)) return false
+      seenChats.add(key); return true
+    })
+    setChats(dedupedChats)
     setReports(rRes.data?.map(r => r.data) ?? [])
   }
 
@@ -1645,7 +1696,7 @@ export default function App() {
   }
 
   function handleAutoCI(ciData) {
-    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: ciData.emotionInt }
+    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: ciData.emotionInt, chatId: ciData.chatId || null }
     setCIs(p => [...p, ci])
     saveToSupabase('liv_checkins', ci)
   }
@@ -1742,7 +1793,7 @@ export default function App() {
       <div style={{ flex: 1, overflow: 'hidden' }}>
         {screen === 'home'    && <Home checkins={checkins} chats={chats} userName={userName} user={user} onNav={s => { setSeed(null); setScreen(s) }}/>}
         {screen === 'checkin' && <CheckIn onBack={() => setScreen('home')} onDone={handleCIDone}/>}
-        {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')}/>}
+        {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')} onAutoCI={handleAutoCI}/>}
         {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave}/>}
         {screen === 'auth'    && <AuthScreen onBack={() => setScreen('profile')} onDone={() => setScreen('home')}/>}
         {screen === 'profile' && <Profile checkins={checkins} chats={chats} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
