@@ -766,13 +766,22 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
 
   async function handleBack() {
     const userMsgs = msgs.filter(m => m.role === 'user')
+    console.log('[handleBack] userMsgs:', userMsgs.length, '| isFinder:', isFinder, '| onSaveChat:', !!onSaveChat)
     if (!isFinder && userMsgs.length >= 2 && onSaveChat) {
       try {
+        console.log('[handleBack] chiamo haiku per estrazione...')
         const raw = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
-        const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
+        console.log('[handleBack] risposta haiku raw:', raw)
+        let parsed = {}
+        try {
+          parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
+          console.log('[handleBack] parsed:', parsed)
+        } catch (parseErr) {
+          console.error('[handleBack] errore parsing JSON:', parseErr.message, '| raw:', raw)
+        }
         const chatId = Date.now()
         const preview = userMsgs[0]?.content?.slice(0, 100) || ''
-        onSaveChat({
+        const chatData = {
           date: new Date().toISOString().split('T')[0],
           id: chatId,
           msgCount: msgs.length,
@@ -780,15 +789,20 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
           temi: parsed.temi || [],
           insight: parsed.insight || null,
           domanda_riflessiva: parsed.domanda_riflessiva || null,
-        })
+        }
+        console.log('[handleBack] chiamo onSaveChat con:', chatData)
+        onSaveChat(chatData)
         // Auto check-in immediato se emotion estratta
         if (onAutoCI && parsed.emotion && parsed.intensity && parsed.area) {
+          console.log('[handleBack] creo auto check-in:', parsed.emotion, parsed.intensity, parsed.area)
           onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId })
           markChatProcessed(chatId)
           setToast(true)
           setTimeout(() => setToast(false), 3000)
         }
-      } catch {}
+      } catch (err) {
+        console.error('[handleBack] errore generale:', err.message)
+      }
     }
     onBack()
   }
@@ -1656,9 +1670,11 @@ export default function App() {
 
   // Salva su Supabase solo se loggato
   async function saveToSupabase(table, data) {
-    if (!user) return
+    if (!user) { console.log('[Supabase] saveToSupabase skip: utente non loggato'); return }
+    console.log('[Supabase] insert in', table, data)
     const { error } = await supabase.from(table).insert({ user_id: user.id, data })
     if (error) console.error('[Supabase] errore insert in', table, ':', error.message)
+    else console.log('[Supabase] insert OK in', table)
   }
 
   function handleCIDone(data, s) {
