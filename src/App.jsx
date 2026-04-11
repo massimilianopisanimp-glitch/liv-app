@@ -800,6 +800,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         temi: parsed.temi || [],
         insight: parsed.insight || null,
         domanda_riflessiva: parsed.domanda_riflessiva || null,
+        messages: msgs.map(m => ({ role: m.role, content: m.content })),
       }
       console.log('[handleBack] chiamo onSaveChat con:', chatData)
       onSaveChat(chatData)
@@ -1068,6 +1069,7 @@ function Assessment({ onBack, onSaveReport }) {
 
 /* ─── DIARIO ────────────────────────────────────────────────────────────── */
 function Diario({ checkins, chats, onBack, onAutoCI }) {
+  const [expandedChat, setExpandedChat] = useState(null)
   // Auto check-in per chat esistenti non ancora processate
   useEffect(() => {
     if (!onAutoCI) return
@@ -1149,26 +1151,55 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                   {(ev.secEmotionLabel || ev.secEmotion) && <span style={{ background: C.purpleDim, color: C.purple, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.secEmotionLabel || ev.secEmotion}</span>}
                 </div>
               </>
-            })() : <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
-                  <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
-                </div>
-                <span style={{ color: C.muted, fontSize: 12 }}>{ev.msgCount || 0} msg</span>
-              </div>
-              {ev.preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: 6 }}>{ev.preview}</p>}
-              {ev.temi && ev.temi.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                  {ev.temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
-                </div>
-              )}
-              {ev.insight && (
-                <div style={{ marginTop: 8, padding: '10px 12px', background: `${C.accent}08`, borderRadius: 12, border: `0.5px solid ${C.accent}18` }}>
-                  <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{ev.insight}</p>
-                </div>
-              )}
-            </>}
+            })() : (() => {
+              const isOpen = expandedChat === ev.id
+              return <>
+                <button onClick={() => setExpandedChat(isOpen ? null : ev.id)}
+                  style={{ width: '100%', background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: ev.preview ? 6 : 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                      <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
+                      <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: C.muted, fontSize: 12 }}>{ev.msgCount || 0} msg</span>
+                      <span style={{ color: C.muted, fontSize: 16, lineHeight: 1, display: 'inline-block', transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}>›</span>
+                    </div>
+                  </div>
+                  {ev.preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: ev.temi?.length ? 4 : 0 }}>{ev.preview}</p>}
+                  {ev.temi && ev.temi.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                      {ev.temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
+                    </div>
+                  )}
+                </button>
+                {!isOpen && ev.insight && (
+                  <div style={{ marginTop: 8, padding: '8px 12px', background: `${C.accent}08`, borderRadius: 10, border: `0.5px solid ${C.accent}18` }}>
+                    <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{ev.insight}</p>
+                  </div>
+                )}
+                {isOpen && (
+                  <div style={{ marginTop: 12, borderTop: `0.5px solid ${C.border}`, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {ev.messages?.length > 0 ? ev.messages.map((m, mi) => (
+                      <div key={mi} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
+                        {m.role === 'assistant' && (
+                          <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
+                        )}
+                        <div style={{
+                          maxWidth: '80%', padding: '8px 12px', fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap',
+                          borderRadius: m.role === 'assistant' ? '14px 14px 14px 3px' : '14px 14px 3px 14px',
+                          background: m.role === 'assistant' ? '#fff' : C.accent,
+                          border: m.role === 'assistant' ? `0.5px solid ${C.border}` : 'none',
+                          color: m.role === 'assistant' ? C.text : '#fff',
+                        }}>{m.content}</div>
+                      </div>
+                    )) : (
+                      <p style={{ color: C.muted, fontSize: 12, fontStyle: 'italic' }}>Messaggi non disponibili per questa conversazione.</p>
+                    )}
+                  </div>
+                )}
+              </>
+            })()}
           </div>
         ))}
       </div>
