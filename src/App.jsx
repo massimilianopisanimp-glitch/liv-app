@@ -1130,7 +1130,10 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
       <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(12px,3vw,28px) clamp(14px,4vw,36px)' }}>
         {allEvents.length === 0 && <p style={{ color: C.muted, fontSize: 14, textAlign: 'center', marginTop: 40 }}>Nessuna attività ancora. Inizia con il tuo primo check-in!</p>}
         {allEvents.map((ev, i) => (
-          <div key={i} style={{ background: C.card, borderRadius: 18, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8 }}>
+          <div key={i}
+            onClick={ev.type === 'chat' ? () => setExpandedChat(expandedChat === (ev.id ?? i) ? null : (ev.id ?? i)) : undefined}
+            className={ev.type === 'chat' ? 'tap' : ''}
+            style={{ background: C.card, borderRadius: 18, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8, cursor: ev.type === 'chat' ? 'pointer' : 'default' }}>
             {ev.type === 'checkin' ? (() => {
               const isAuto = !!ev.auto
               return <>
@@ -1152,27 +1155,25 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                 </div>
               </>
             })() : (() => {
-              const isOpen = expandedChat === ev.id
+              const evKey = ev.id ?? i
+              const isOpen = expandedChat === evKey
               return <>
-                <button onClick={() => setExpandedChat(isOpen ? null : ev.id)}
-                  style={{ width: '100%', background: 'none', border: 'none', padding: 0, textAlign: 'left', cursor: 'pointer' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: ev.preview ? 6 : 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                      <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
-                      <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ color: C.muted, fontSize: 12 }}>{ev.msgCount || 0} msg</span>
-                      <span style={{ color: C.muted, fontSize: 16, lineHeight: 1, display: 'inline-block', transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}>›</span>
-                    </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: ev.preview ? 6 : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
+                    <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
                   </div>
-                  {ev.preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: ev.temi?.length ? 4 : 0 }}>{ev.preview}</p>}
-                  {ev.temi && ev.temi.length > 0 && (
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                      {ev.temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
-                    </div>
-                  )}
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ color: C.muted, fontSize: 12 }}>{ev.msgCount || 0} msg</span>
+                    <span style={{ color: C.muted, fontSize: 16, lineHeight: 1, display: 'inline-block', transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}>›</span>
+                  </div>
+                </div>
+                {ev.preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: ev.temi?.length ? 4 : 0 }}>{ev.preview}</p>}
+                {ev.temi && ev.temi.length > 0 && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                    {ev.temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
+                  </div>
+                )}
                 {!isOpen && ev.insight && (
                   <div style={{ marginTop: 8, padding: '8px 12px', background: `${C.accent}08`, borderRadius: 10, border: `0.5px solid ${C.accent}18` }}>
                     <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{ev.insight}</p>
