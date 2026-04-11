@@ -1058,57 +1058,69 @@ function Assessment({ onBack, onSaveReport }) {
 /* ─── DIARIO ────────────────────────────────────────────────────────────── */
 function Diario({ checkins, chats, onBack }) {
   const allEvents = [
-    ...checkins.map(c => ({ ...c, type: 'checkin', sortDate: new Date(c.date + 'T00:00:00') })),
-    ...chats.map(c => ({ ...c, type: 'chat', sortDate: new Date(c.date + 'T00:00:00') })),
-  ].sort((a, b) => b.sortDate - a.sortDate)
+    ...checkins.map(c => ({ ...c, type: 'checkin', sortTs: c.id || new Date(c.date + 'T00:00:00').getTime() })),
+    ...chats.map(c => ({ ...c, type: 'chat',    sortTs: c.id || new Date(c.date + 'T00:00:00').getTime() })),
+  ].sort((a, b) => b.sortTs - a.sortTs)
 
-  function fmtDate(d) {
-    try { return new Date(d).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) } catch { return d }
+  function fmtDatetime(ts, dateStr) {
+    try {
+      const d = ts ? new Date(ts) : new Date(dateStr + 'T00:00:00')
+      const date = d.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' })
+      const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+      return `${date} · ${time}`
+    } catch { return dateStr }
   }
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
         <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}><Ico n="back" sz={22} c={C.muted}/></button>
         <div style={{ flex: 1 }}>
-          <div style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Il mio Diario</div>
+          <div style={{ color: C.text, fontWeight: 400, fontSize: 16, fontFamily: "'DM Serif Display',serif" }}>Il mio Diario</div>
           <div style={{ color: C.muted, fontSize: 11 }}>{checkins.length} check-in · {chats.length} chat</div>
         </div>
       </div>
-      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(12px,3vw,32px) clamp(14px,4vw,40px)' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(12px,3vw,28px) clamp(14px,4vw,36px)' }}>
         {allEvents.length === 0 && <p style={{ color: C.muted, fontSize: 14, textAlign: 'center', marginTop: 40 }}>Nessuna attività ancora. Inizia con il tuo primo check-in!</p>}
         {allEvents.map((ev, i) => (
-          <div key={i} className="fu" style={{ background: C.card, borderRadius: 18, border: `1px solid ${C.border}`, padding: '16px 18px', marginBottom: 10 }}>
-            {ev.type === 'checkin' ? <>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ background: C.tealDim, color: C.teal, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHECK-IN</span>
-                  <span style={{ color: C.accent, fontSize: 12, fontWeight: 600 }}>{fmtDate(ev.date)}</span>
+          <div key={i} style={{ background: C.card, borderRadius: 18, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8 }}>
+            {ev.type === 'checkin' ? (() => {
+              const isAuto = !!ev.auto
+              return <>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{
+                      background: isAuto ? 'rgba(139,144,112,.15)' : C.tealDim,
+                      color: isAuto ? '#8B9070' : C.teal,
+                      padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700, letterSpacing: .3
+                    }}>{isAuto ? 'AUTO' : 'CHECK-IN'}</span>
+                    <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
+                  </div>
+                  {ev.mood != null && <span style={{ color: C.muted, fontSize: 12 }}>Mood {ev.mood}/10</span>}
                 </div>
-                <span style={{ color: C.muted, fontSize: 12 }}>Mood {ev.mood}/10</span>
-              </div>
-              <div style={{ color: C.text, fontSize: 16, fontWeight: 700, textTransform: 'capitalize', marginBottom: 6 }}>{ev.emotionLabel || ev.emotion}</div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                <span style={{ background: C.tealDim, color: C.teal, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.areaLabel || ev.area}</span>
-                {(ev.secEmotionLabel || ev.secEmotion) && <span style={{ background: C.purpleDim, color: C.purple, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.secEmotionLabel || ev.secEmotion}</span>}
-              </div>
-            </> : <>
+                <div style={{ color: C.text, fontSize: 15, fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>{ev.emotionLabel || ev.emotion}</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(ev.areaLabel || ev.area) && <span style={{ background: C.tealDim, color: C.teal, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.areaLabel || ev.area}</span>}
+                  {(ev.secEmotionLabel || ev.secEmotion) && <span style={{ background: C.purpleDim, color: C.purple, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.secEmotionLabel || ev.secEmotion}</span>}
+                </div>
+              </>
+            })() : <>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                   <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
-                  <span style={{ color: C.accent, fontSize: 12, fontWeight: 600 }}>{fmtDate(ev.date)}</span>
+                  <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
                 </div>
-                <span style={{ color: C.muted, fontSize: 12 }}>{ev.msgCount || 0} messaggi</span>
+                <span style={{ color: C.muted, fontSize: 12 }}>{ev.msgCount || 0} msg</span>
               </div>
-              {ev.preview && <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.55, marginBottom: 6 }}>{ev.preview}</p>}
+              {ev.preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: 6 }}>{ev.preview}</p>}
               {ev.temi && ev.temi.length > 0 && (
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
                   {ev.temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
                 </div>
               )}
               {ev.insight && (
-                <div style={{ marginTop: 8, padding: '10px 12px', background: `${C.accent}08`, borderRadius: 12, border: `1px solid ${C.accent}15` }}>
-                  <p style={{ color: 'rgba(0,0,0,.6)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{ev.insight}</p>
+                <div style={{ marginTop: 8, padding: '10px 12px', background: `${C.accent}08`, borderRadius: 12, border: `0.5px solid ${C.accent}18` }}>
+                  <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{ev.insight}</p>
                 </div>
               )}
             </>}
