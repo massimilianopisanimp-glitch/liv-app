@@ -85,9 +85,7 @@ Se l'utente esprime pensieri suicidari o autolesionismo:
 → "Quello che mi stai dicendo è importante. Ti chiedo di contattare il Telefono Amico al 02 2327 2327 o il 112. Non sei solo/a."
 → Non continuare la conversazione normale.`
 
-const SYS_INSIGHT = `Genera insight JSON dalla conversazione:
-{"temi":["..."],"insight":"2-4 frasi calde","domanda_riflessiva":"..."}
-Se <4 scambi: {"temi":[],"insight":null,"domanda_riflessiva":null}`
+const SYS_INSIGHT = `Analizza questa conversazione e rispondi SOLO con JSON: {"temi":["tema1","tema2"],"insight":"frase riassuntiva","emotion":"emozione prevalente","intensity":5,"area":"area di vita","domanda_riflessiva":"domanda"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro. Se meno di 3 messaggi utente: {"temi":[],"insight":null,"emotion":null,"intensity":null,"area":null,"domanda_riflessiva":null}`
 
 const SYS_AUTO_CHECKIN = `Analizza questa conversazione e restituisci SOLO un oggetto JSON valido, senza testo aggiuntivo, senza markdown, senza backtick.
 Formato: {"emotion":"EMOZIONE","intensity":N,"area":"AREA"}
@@ -689,7 +687,6 @@ function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinde
   const [toast, setToast] = useState(false)
   const bot = useRef(null)
   const ta = useRef(null)
-  const lastAutoCIAt = useRef(0) // numero di msg utente all'ultimo auto-CI
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, load])
   useEffect(() => {
@@ -722,20 +719,6 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         .finally(() => { sl(false) })
     }
   }, [])
-
-  async function doAutoCI(currentMsgs) {
-    if (isFinder || !onAutoCI) return
-    try {
-      const raw = await callAI(currentMsgs, SYS_AUTO_CHECKIN, 'claude-haiku-4-5-20251001')
-      const clean = raw.replace(/```json|```/g, '').trim()
-      const parsed = JSON.parse(clean)
-      if (parsed.emotion && parsed.intensity && parsed.area) {
-        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area })
-        setToast(true)
-        setTimeout(() => setToast(false), 3000)
-      }
-    } catch { /* silenzioso */ }
-  }
 
   async function run(text, base) {
     const cur = base || msgs
@@ -773,12 +756,6 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
     }
     sl(false)
     setThinking(false)
-    // Auto check-in ogni 5 messaggi utente
-    const uCount = [...next, ...[]].filter(m => m.role === 'user').length
-    if (!isFinder && uCount > 0 && uCount % 5 === 0 && uCount > lastAutoCIAt.current) {
-      lastAutoCIAt.current = uCount
-      doAutoCI(next)
-    }
   }
 
   async function send() {
@@ -789,26 +766,29 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
 
   async function handleBack() {
     const userMsgs = msgs.filter(m => m.role === 'user')
-    if (!isFinder && userMsgs.length >= 2) {
-      // Auto check-in alla chiusura se non già fatto
-      if (onAutoCI && userMsgs.length > lastAutoCIAt.current) {
-        lastAutoCIAt.current = userMsgs.length
-        doAutoCI(msgs) // fire-and-forget, non blocca il back
-      }
-      // Salva insight chat
-      if (onSaveChat) {
-        try {
-          const insightRaw = await callAI(msgs, SYS_INSIGHT)
-          let temi = [], insight = null, domanda = null
-          try {
-            const clean = insightRaw.replace(/```json|```/g, '').trim()
-            const parsed = JSON.parse(clean)
-            temi = parsed.temi || []; insight = parsed.insight; domanda = parsed.domanda_riflessiva
-          } catch {}
-          const preview = userMsgs[0]?.content?.slice(0, 100) || ''
-          onSaveChat({ date: new Date().toISOString().split('T')[0], id: Date.now(), msgCount: msgs.length, preview, temi, insight, domanda_riflessiva: domanda })
-        } catch {}
-      }
+    if (!isFinder && userMsgs.length >= 2 && onSaveChat) {
+      try {
+        const raw = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
+        const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
+        const chatId = Date.now()
+        const preview = userMsgs[0]?.content?.slice(0, 100) || ''
+        onSaveChat({
+          date: new Date().toISOString().split('T')[0],
+          id: chatId,
+          msgCount: msgs.length,
+          preview,
+          temi: parsed.temi || [],
+          insight: parsed.insight || null,
+          domanda_riflessiva: parsed.domanda_riflessiva || null,
+        })
+        // Auto check-in immediato se emotion estratta
+        if (onAutoCI && parsed.emotion && parsed.intensity && parsed.area) {
+          onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId })
+          markChatProcessed(chatId)
+          setToast(true)
+          setTimeout(() => setToast(false), 3000)
+        }
+      } catch {}
     }
     onBack()
   }
