@@ -1656,15 +1656,13 @@ export default function App() {
       setCIs(remoteCheckins)
     }
 
-    // Dedup chat per date + preview (stessa chat salvata più volte)
+    // Dedup chat solo per id — mantieni l'ultima occorrenza per ogni id
     const rawChats = chRes.data?.map(r => r.data) ?? []
-    const seenChats = new Set()
-    const dedupedChats = rawChats.filter(c => {
-      const key = `${c.date}|${(c.preview || '').slice(0, 50)}|${c.msgCount || 0}`
-      if (seenChats.has(key)) return false
-      seenChats.add(key); return true
-    })
-    setChats(dedupedChats)
+    const byId = new Map()
+    rawChats.forEach(c => { if (c.id != null) byId.set(c.id, c) })
+    // Chat senza id le teniamo tutte
+    const noId = rawChats.filter(c => c.id == null)
+    setChats([...byId.values(), ...noId])
     setReports(rRes.data?.map(r => r.data) ?? [])
   }
 
