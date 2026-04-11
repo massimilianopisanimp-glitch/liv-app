@@ -772,23 +772,20 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       const preview = userMsgs[0]?.content?.slice(0, 100) || ''
 
       async function extractWithRetry() {
-        try {
-          console.log('[handleBack] chiamo haiku per estrazione...')
-          const raw = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
-          console.log('[handleBack] risposta haiku raw:', raw)
-          return JSON.parse(raw.replace(/```json|```/g, '').trim())
-        } catch (err) {
-          console.warn('[handleBack] primo tentativo fallito:', err.message, '— retry tra 2s')
-          await new Promise(r => setTimeout(r, 2000))
+        const models = ['claude-haiku-4-5', 'claude-sonnet-4-20250514']
+        for (const model of models) {
           try {
-            const raw2 = await callAI(msgs, SYS_INSIGHT, 'claude-haiku-4-5-20251001')
-            console.log('[handleBack] retry risposta raw:', raw2)
-            return JSON.parse(raw2.replace(/```json|```/g, '').trim())
-          } catch (err2) {
-            console.error('[handleBack] retry fallito:', err2.message)
-            return {}
+            console.log('[handleBack] chiamo', model, 'per estrazione...')
+            const raw = await callAI(msgs, SYS_INSIGHT, model)
+            console.log('[handleBack] risposta raw:', raw)
+            return JSON.parse(raw.replace(/```json|```/g, '').trim())
+          } catch (err) {
+            console.warn('[handleBack]', model, 'fallito:', err.message, '— provo modello successivo tra 2s')
+            await new Promise(r => setTimeout(r, 2000))
           }
         }
+        console.error('[handleBack] tutti i modelli falliti')
+        return {}
       }
 
       const parsed = await extractWithRetry()
@@ -1091,7 +1088,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
           chat.preview ? `Primo messaggio: "${chat.preview}"` : '',
         ].filter(Boolean).join(' ')
         try {
-          const raw = await callAI([{ role: 'user', content: text }], SYS_AUTO_CHECKIN, 'claude-haiku-4-5-20251001')
+          const raw = await callAI([{ role: 'user', content: text }], SYS_AUTO_CHECKIN, 'claude-haiku-4-5')
           const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim())
           if (parsed.emotion && parsed.intensity && parsed.area) {
             onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId: chat.id })
@@ -1370,7 +1367,7 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
 
     const ctx = `CHECK-IN DELL'UMORE (più recenti prima):\n${ciSummary}${chatSummary ? `\n\nTEMI DELLE CONVERSAZIONI:\n${chatSummary}` : ''}`
 
-    callAI([{ role: 'user', content: ctx }], SYS_PROFILE, 'claude-haiku-4-5-20251001')
+    callAI([{ role: 'user', content: ctx }], SYS_PROFILE, 'claude-haiku-4-5')
       .then(raw => {
         try {
           const clean = raw.replace(/```json|```/g, '').trim()
