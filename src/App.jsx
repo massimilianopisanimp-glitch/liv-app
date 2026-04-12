@@ -889,16 +889,26 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       const extractPrompt = '[SISTEMA: analizza questa conversazione e rispondimi SOLO con un oggetto JSON valido, nessun testo prima o dopo: {"emotion":"emozione prevalente","intensity":numero da 1 a 10,"area":"area di vita","temi":["tema1","tema2"],"insight":"frase riassuntiva in italiano"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro.]'
       const extractMsgs = [...msgs, { role: 'user', content: extractPrompt }]
 
+      async function callExtract(msgs) {
+        const r = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: msgs }),
+        })
+        if (!r.ok) throw new Error('Errore /api/extract')
+        const { text, error } = await r.json()
+        if (error) throw new Error(error)
+        return JSON.parse(text.replace(/```json|```/g, '').trim())
+      }
+
       async function extractWithRetry() {
         try {
-          const raw = await callAI(extractMsgs, sys || SYS_CHAT)
-          return JSON.parse(raw.replace(/```json|```/g, '').trim())
+          return await callExtract(extractMsgs)
         } catch (err) {
-          console.warn('[handleBack] primo tentativo fallito:', err.message, '— retry tra 2s')
+          console.warn('[handleBack] estrazione fallita:', err.message, '— retry tra 2s')
           await new Promise(r => setTimeout(r, 2000))
           try {
-            const raw2 = await callAI(extractMsgs, sys || SYS_CHAT)
-            return JSON.parse(raw2.replace(/```json|```/g, '').trim())
+            return await callExtract(extractMsgs)
           } catch (err2) {
             console.error('[handleBack] retry fallito:', err2.message)
             return {}
