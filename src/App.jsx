@@ -741,7 +741,7 @@ function MoodFace({ val }) {
             <circle cx={eyeRx+1.8} cy={eyeY-1.5} r={sparkR} fill="white" opacity={sparkOp} style={{ transition: 'all .4s' }} />
           </>}
         </>}
-        <path d={mouthPath} stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" fill="none" style={{ transition: 'd .45s' }} />
+        <path d={mouthPath} stroke={fc} strokeWidth="2.5" strokeLinecap="round" fill="none" style={{ transition: 'd .45s' }} />
       </svg>
     </div>
   )
