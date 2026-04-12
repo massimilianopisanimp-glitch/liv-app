@@ -53,37 +53,34 @@ const SAFETY = [/voglio morire/i,/suicid/i,/farmi del male/i,/uccidere/i]
 
 /* ─── SYSTEM PROMPTS ───────────────────────────────────────────────────── */
 
-const SYS_CHAT = `Sei Liv, un'intelligenza artificiale. Non sei uno psicologo, non sei un terapeuta, non sei un amico — sei uno strumento digitale di ascolto e riflessione.
+const SYS_CHAT = `Sei Liv, un'intelligenza artificiale. Non sei uno psicologo, non sei un terapeuta — sei uno strumento di ascolto e riflessione.
 
-IL TUO RUOLO:
-Aiuti le persone a riflettere su come si sentono — nelle relazioni, nel lavoro, nella vita quotidiana. Le relazioni sentimentali sono il tuo focus principale, ma ascolti qualsiasi cosa l'utente voglia esplorare. Non dai consigli, non risolvi problemi, non interpreti. Fai domande e rifletti quello che l'utente esprime.
+IL TUO OBIETTIVO PRINCIPALE: aiutare l'utente a dare un nome preciso alle emozioni che sta provando. Molte persone sanno che stanno male ma non sanno cosa sentono esattamente. Il tuo compito è accompagnarle in questa esplorazione con curiosità e calore.
 
-COME LAVORI:
-1. Inizia sempre con una domanda aperta su come sta l'utente oggi.
-2. Ascolta attivamente — rifletti il contenuto e l'emozione di quello che dice.
-3. Fai una sola domanda per messaggio, mai di più.
-4. Aiuta l'utente a esplorare i propri pattern con domande come "Ti è già capitato di sentirti così?" o "Cosa noti in questa situazione?"
-5. Non dare mai consigli diretti, non usare "dovresti" o "devi".
-6. Quando l'utente sta male, resta in ascolto senza cambiare argomento o proporre soluzioni.
+FLUSSO DELLA CONVERSAZIONE:
+1. Ricevi un numero da 1 a 10. Usalo come punto di partenza — commenta brevemente e chiedi cosa sta succedendo.
+2. Se hai conversazioni precedenti, chiedi degli sviluppi: 'L'ultima volta mi hai parlato di X — com'è andata?'
+3. Esplora l'emozione insieme all'utente. Non dare nomi tu per primo — fai domande che aiutano l'utente a trovarli da solo. 'Come descriveresti questa sensazione?' 'È più simile a tristezza o a frustrazione?' 'Dove la senti nel corpo?'
+4. Quando l'utente ha trovato un nome, esplora l'intensità: 'Quanto è forte, da 1 a 10?' 'Ci sono altre emozioni sotto?'
+5. Approfondisci il contesto: cosa ha scatenato questa emozione, c'è un pattern ricorrente, cosa dice di ciò che è importante per l'utente.
+6. Quando emerge un tema significativo, proponi una scrittura riflessiva guidata: 'Provo a proporti qualcosa — scrivi per 5 minuti su questo: [prompt personalizzato basato su quello che è emerso]. Non ci sono risposte giuste. Scrivi quello che viene.'
+7. Quando l'utente condivide la scrittura, rispecchia senza analizzare: rifletti i temi che emergono, fai una domanda aperta.
 
 STILE:
-- Risposte brevi, massimo 3-4 frasi
-- Tono caldo e neutro, mai clinico
+- Tono caldo, curioso, mai clinico — come un amico con formazione psicologica
+- Una domanda per messaggio, mai di più
+- Risposte brevi: 2-3 frasi massimo
+- Mai diagnosi, mai etichette cliniche, mai consigli diretti
+- Usa sempre 'tu'
 - Mai emoji
-- Mai diagnosi o etichette
-- Usa sempre "tu"
-
-COME USARE IL CONTESTO DELLE CONVERSAZIONI PRECEDENTI:
-- Usa il contesto per personalizzare le domande, non per riferirlo esplicitamente
-- Non dire mai "vedo che", "nei miei dati", "ho accesso a", "risulta che"
-- Se l'utente chiede cosa si sono detti, rispondi onestamente ma in modo naturale: "L'ultima volta hai accennato a [tema]" oppure "Ricordo che mi hai parlato di [tema]"
-- Non inventare mai dettagli che non hai
-- Se non hai contesto, dillo semplicemente: "Non ho informazioni sulle nostre conversazioni precedenti"
 
 SICUREZZA:
 Se l'utente esprime pensieri suicidari o autolesionismo:
-→ "Quello che mi stai dicendo è importante. Ti chiedo di contattare il Telefono Amico al 02 2327 2327 o il 112. Non sei solo/a."
-→ Non continuare la conversazione normale.`
+→ 'Quello che mi stai dicendo è importante. Ti chiedo di contattare il Telefono Amico al 02 2327 2327 o il 112. Non sei solo/a.'
+→ Non continuare la conversazione normale.
+
+MEMORIA:
+Usa il contesto delle conversazioni precedenti per personalizzare — non ripeterne il contenuto, usalo per capire meglio chi hai davanti e dove si trova nel suo percorso.`
 
 const SYS_INSIGHT = `Analizza questa conversazione e rispondi ESCLUSIVAMENTE con un oggetto JSON valido, senza testo aggiuntivo prima o dopo. Formato esatto: {"temi":["tema1","tema2"],"insight":"frase riassuntiva in italiano","domanda_riflessiva":"domanda in italiano","emotion":"emozione prevalente","intensity":7,"area":"area di vita"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro. Se non ci sono dati sufficienti restituisci: {"temi":[],"insight":null,"domanda_riflessiva":null,"emotion":null,"intensity":null,"area":null}`
 
@@ -669,6 +666,40 @@ function CheckIn({ onBack, onDone }) {
             )}
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+/* ─── MOOD GATE ──────────────────────────────────────────────────────────── */
+function MoodGate({ onBack, onContinue }) {
+  const [val, setVal] = useState(5)
+  const face = val < 4 ? '😞' : val <= 6 ? '😐' : '😊'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg }}>
+      {/* header */}
+      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: `0.5px solid ${C.border}`, background: C.card }}>
+        <button className="tap" onClick={onBack} style={{ border: 'none', background: 'none', padding: 6, marginRight: 8, borderRadius: 10 }}>
+          <Ico n="back" sz={20} c={C.text}/>
+        </button>
+        <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 18, color: C.text }}>Come mi sento ora</span>
+      </div>
+      {/* body */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 36px 40px' }}>
+        <div style={{ fontSize: 72, marginBottom: 8, lineHeight: 1 }}>{face}</div>
+        <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 64, color: C.text, lineHeight: 1, marginBottom: 40 }}>{val}</div>
+        <div style={{ width: '100%', marginBottom: 48 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: C.muted, fontSize: 11, marginBottom: 10 }}>
+            <span>0</span><span>10</span>
+          </div>
+          <input type="range" min={0} max={10} step={1} value={val}
+            onChange={e => setVal(Number(e.target.value))}
+            style={{ width: '100%' }}/>
+        </div>
+        <button className="tap" onClick={() => onContinue(val)}
+          style={{ width: '100%', padding: '16px', borderRadius: 16, border: 'none', background: '#6B9080', color: '#fff', fontSize: 16, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", cursor: 'pointer' }}>
+          Continua →
+        </button>
       </div>
     </div>
   )
@@ -1819,18 +1850,21 @@ export default function App() {
     { id: 'finder',  icon: 'search',  label: 'Psicologo' },
   ]
 
-  const isFS = ['chat', 'checkin', 'assess', 'finder', 'diario', 'profile', 'auth'].includes(screen)
+  const isFS = ['chat', 'checkin', 'assess', 'finder', 'diario', 'profile', 'auth', 'mood-gate'].includes(screen)
 
   return (
     <div className="app-shell">
       {/* content */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        {screen === 'home'    && <Home checkins={checkins} chats={chats} userName={userName} user={user} onNav={s => { setSeed(null); setScreen(s) }}/>}
+        {screen === 'home'    && <Home checkins={checkins} chats={chats} userName={userName} user={user} onNav={s => { setSeed(null); setScreen(s === 'chat' ? 'mood-gate' : s) }}/>}
         {screen === 'checkin' && <CheckIn onBack={() => setScreen('home')} onDone={handleCIDone}/>}
         {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')} onAutoCI={handleAutoCI}/>}
         {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave}/>}
         {screen === 'auth'    && <AuthScreen onBack={() => setScreen('profile')} onDone={() => setScreen('home')}/>}
         {screen === 'profile' && <Profile checkins={checkins} chats={chats} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
+        {screen === 'mood-gate' && <MoodGate
+          onBack={() => setScreen('home')}
+          onContinue={v => { setSeed(`Mood iniziale: ${v}/10`); setScreen('chat') }}/>}
         {screen === 'chat'    && <ChatView
           onBack={() => { setScreen('home'); setSeed(null) }}
           onSaveChat={handleSaveChat}
@@ -1838,7 +1872,6 @@ export default function App() {
           seed={seed} sys={buildChatSys()}
           accent={C.teal}
           title="Liv" subtitle="in ascolto"
-          initMsg="Sono Liv, un'intelligenza artificiale — non sono uno psicologo né un professionista della salute mentale. Sono qui per ascoltarti e aiutarti a riflettere. Come stai oggi?"
           isFinder={false}/>}
         {screen === 'finder'  && <ChatView
           onBack={() => setScreen('home')}
@@ -1852,7 +1885,7 @@ export default function App() {
       {!isFS && (
         <div style={{ borderTop: `1px solid ${C.border}`, background: C.tabBarBg, padding: '10px 0 28px', display: 'flex', flexShrink: 0 }}>
           {TABS.map(t => (
-            <button key={t.id} className="tap" onClick={() => { setSeed(null); setScreen(t.id) }}
+            <button key={t.id} className="tap" onClick={() => { setSeed(null); setScreen(t.id === 'chat' ? 'mood-gate' : t.id) }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, border: 'none', background: 'none', padding: '4px 0' }}>
               <Ico n={t.icon} sz={20} c={screen === t.id ? C.accent : 'rgba(45,45,45,.25)'}/>
               <span style={{ fontSize: 9, fontWeight: 600, color: screen === t.id ? C.accent : 'rgba(45,45,45,.25)', letterSpacing: .2 }}>{t.label}</span>
