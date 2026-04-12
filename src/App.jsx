@@ -1744,8 +1744,171 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
   )
 }
 
+/* ─── ADMIN ─────────────────────────────────────────────────────────────── */
+const ADMIN_EMAIL = 'massimilianopisani.mp@gmail.com'
+
+function AdminScreen() {
+  const [user, setUser] = useState(null)
+  const [chats, setChats] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [expanded, setExpanded] = useState(null)
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      const u = session?.user ?? null
+      setUser(u)
+      if (!u || u.email !== ADMIN_EMAIL) { setLoading(false); return }
+      try {
+        const r = await fetch('/api/admin', {
+          headers: { Authorization: `Bearer ${session.access_token}` }
+        })
+        if (!r.ok) throw new Error(`HTTP ${r.status}`)
+        const { chats: data, error: e } = await r.json()
+        if (e) throw new Error(e)
+        setChats(data || [])
+      } catch (err) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    })
+  }, [])
+
+  if (loading) return (
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
+      <span style={{ color: C.muted, fontSize: 14 }}>Caricamento...</span>
+    </div>
+  )
+
+  if (!user || user.email !== ADMIN_EMAIL) return (
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
+      <span style={{ color: C.muted, fontSize: 14 }}>Accesso negato.</span>
+    </div>
+  )
+
+  if (error) return (
+    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: C.bg }}>
+      <span style={{ color: '#c0392b', fontSize: 14 }}>Errore: {error}</span>
+    </div>
+  )
+
+  // Statistiche aggregate
+  const uniqueUsers = new Set(chats.map(c => c.user_id)).size
+  const totalMsgs = chats.reduce((s, c) => s + (c.data?.msgCount || 0), 0)
+  const avgMsgs = chats.length ? Math.round(totalMsgs / chats.length * 10) / 10 : 0
+  const emoCount = {}
+  chats.forEach(c => { if (c.data?.emotion) emoCount[c.data.emotion] = (emoCount[c.data.emotion] || 0) + 1 })
+  const topEmos = Object.entries(emoCount).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+  const anonId = uid => 'Utente_' + uid.slice(0, 8)
+  const fmtTs = ts => ts ? new Date(ts).toLocaleString('it-IT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg, overflowY: 'auto' }}>
+      {/* header */}
+      <div style={{ background: C.card, borderBottom: `0.5px solid ${C.border}`, padding: '20px 24px' }}>
+        <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 24, color: C.text, marginBottom: 4 }}>Admin</div>
+        <div style={{ color: C.muted, fontSize: 12 }}>Solo per {ADMIN_EMAIL}</div>
+      </div>
+
+      <div style={{ padding: '20px 20px', maxWidth: 680, width: '100%', margin: '0 auto' }}>
+        {/* Statistiche */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
+          {[
+            { label: 'Utenti unici', val: uniqueUsers },
+            { label: 'Conversazioni', val: chats.length },
+            { label: 'Media messaggi', val: avgMsgs },
+          ].map(s => (
+            <div key={s.label} style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px' }}>
+              <div style={{ color: C.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 4 }}>{s.label}</div>
+              <div style={{ color: C.accent, fontSize: 24, fontWeight: 700 }}>{s.val}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Top emozioni */}
+        {topEmos.length > 0 && (
+          <div style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 20 }}>
+            <div style={{ color: C.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>Emozioni più frequenti</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {topEmos.map(([e, n]) => (
+                <span key={e} style={{ background: C.accentDim, color: C.accent, padding: '3px 10px', borderRadius: 20, fontSize: 12, fontWeight: 600 }}>{e} · {n}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Lista conversazioni */}
+        <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 18, color: C.text, marginBottom: 12 }}>Conversazioni</div>
+        {chats.map((c, i) => {
+          const d = c.data || {}
+          const key = c.created_at + i
+          const isOpen = expanded === key
+          return (
+            <div key={key} onClick={() => setExpanded(isOpen ? null : key)} className="tap"
+              style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8, cursor: 'pointer' }}>
+              {/* card header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>{anonId(c.user_id)}</span>
+                  <span style={{ color: C.muted, fontSize: 11 }}>{fmtTs(c.created_at)}</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: C.muted, fontSize: 11 }}>{d.msgCount || 0} msg</span>
+                  <span style={{ color: C.muted, fontSize: 16, display: 'inline-block', transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}>›</span>
+                </div>
+              </div>
+              {/* emotion + area */}
+              {(d.emotion || d.area) && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: d.temi?.length || d.insight ? 6 : 0 }}>
+                  {d.emotion && <span style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{d.emotion}</span>}
+                  {d.area && <span style={{ background: C.faint, color: C.muted, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{d.area}</span>}
+                </div>
+              )}
+              {/* temi */}
+              {d.temi?.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: d.insight ? 6 : 0 }}>
+                  {d.temi.map((t, ti) => <span key={ti} style={{ background: C.faint, color: C.muted, padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{t}</span>)}
+                </div>
+              )}
+              {/* insight */}
+              {!isOpen && d.insight && (
+                <p style={{ color: 'rgba(0,0,0,.5)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic', marginTop: 4 }}>{d.insight}</p>
+              )}
+              {/* messaggi espansi */}
+              {isOpen && (
+                <div style={{ marginTop: 12, borderTop: `0.5px solid ${C.border}`, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {d.messages?.length > 0 ? d.messages.map((m, mi) => (
+                    <div key={mi} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
+                      {m.role === 'assistant' && (
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
+                      )}
+                      <div style={{
+                        maxWidth: '80%', padding: '8px 12px', fontSize: 12, lineHeight: 1.6, whiteSpace: 'pre-wrap',
+                        borderRadius: m.role === 'assistant' ? '14px 14px 14px 3px' : '14px 14px 3px 14px',
+                        background: m.role === 'assistant' ? '#fff' : C.accent,
+                        border: m.role === 'assistant' ? `0.5px solid ${C.border}` : 'none',
+                        color: m.role === 'assistant' ? C.text : '#fff',
+                      }}>{m.content}</div>
+                    </div>
+                  )) : (
+                    <p style={{ color: C.muted, fontSize: 12, fontStyle: 'italic' }}>Messaggi non disponibili.</p>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 /* ─── APP ───────────────────────────────────────────────────────────────── */
 export default function App() {
+  if (window.location.pathname === '/admin') return <div className="app-shell"><AdminScreen /></div>
+
   const [onb, setOnb] = useStore('onb_v1', false)
   const [userName, setUserName] = useStore('uname_v1', '')
   const [checkins, setCIs] = useStore('ci_v1', [])
