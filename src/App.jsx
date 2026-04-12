@@ -886,18 +886,18 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       const chatId = Date.now()
       const preview = userMsgs[0]?.content?.slice(0, 100) || ''
 
+      const extractPrompt = '[SISTEMA: analizza questa conversazione e rispondimi SOLO con un oggetto JSON valido, nessun testo prima o dopo: {"emotion":"emozione prevalente","intensity":numero da 1 a 10,"area":"area di vita","temi":["tema1","tema2"],"insight":"frase riassuntiva in italiano"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro.]'
+      const extractMsgs = [...msgs, { role: 'user', content: extractPrompt }]
+
       async function extractWithRetry() {
         try {
-          console.log('[handleBack] chiamo sonnet per estrazione...')
-          const raw = await callAI(msgs, SYS_INSIGHT, 'claude-sonnet-4-20250514')
-          console.log('[handleBack] risposta raw:', raw)
+          const raw = await callAI(extractMsgs, sys || SYS_CHAT)
           return JSON.parse(raw.replace(/```json|```/g, '').trim())
         } catch (err) {
           console.warn('[handleBack] primo tentativo fallito:', err.message, '— retry tra 2s')
           await new Promise(r => setTimeout(r, 2000))
           try {
-            const raw2 = await callAI(msgs, SYS_INSIGHT, 'claude-sonnet-4-20250514')
-            console.log('[handleBack] retry risposta raw:', raw2)
+            const raw2 = await callAI(extractMsgs, sys || SYS_CHAT)
             return JSON.parse(raw2.replace(/```json|```/g, '').trim())
           } catch (err2) {
             console.error('[handleBack] retry fallito:', err2.message)
