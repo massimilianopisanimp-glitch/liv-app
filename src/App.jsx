@@ -697,9 +697,24 @@ function CheckIn({ onBack, onDone }) {
 }
 
 /* ─── MOOD GATE ──────────────────────────────────────────────────────────── */
+function MoodFace({ val, size = 110 }) {
+  const mouth = val < 4
+    ? `M${size*.28} ${size*.68} Q${size*.5} ${size*.58} ${size*.72} ${size*.68}`
+    : val <= 6
+    ? `M${size*.28} ${size*.65} Q${size*.5} ${size*.65} ${size*.72} ${size*.65}`
+    : `M${size*.28} ${size*.60} Q${size*.5} ${size*.73} ${size*.72} ${size*.60}`
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none" style={{ transition: 'all .3s' }}>
+      <circle cx={size/2} cy={size/2} r={size/2-2} fill={`${C.accent}22`} stroke={C.accent} strokeWidth="2"/>
+      <ellipse cx={size*.35} cy={size*.42} rx={size*.045} ry={size*.055} fill={C.accent}/>
+      <ellipse cx={size*.65} cy={size*.42} rx={size*.045} ry={size*.055} fill={C.accent}/>
+      <path d={mouth} stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'd .3s' }}/>
+    </svg>
+  )
+}
+
 function MoodGate({ onBack, onContinue }) {
-  const [val, setVal] = useState(5)
-  const face = val < 4 ? '😞' : val <= 6 ? '😐' : '😊'
+  const [val, setVal] = useState(6)
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg }}>
       {/* header */}
@@ -707,12 +722,12 @@ function MoodGate({ onBack, onContinue }) {
         <button className="tap" onClick={onBack} style={{ border: 'none', background: 'none', padding: 6, marginRight: 8, borderRadius: 10 }}>
           <Ico n="back" sz={20} c={C.text}/>
         </button>
-        <span style={{ fontFamily: "'DM Serif Display',serif", fontSize: 18, color: C.text }}>Come mi sento ora</span>
       </div>
       {/* body */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 36px 40px' }}>
-        <div style={{ fontSize: 72, marginBottom: 8, lineHeight: 1 }}>{face}</div>
-        <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 64, color: C.text, lineHeight: 1, marginBottom: 40 }}>{val}</div>
+        <p style={{ fontFamily: "'DM Serif Display',serif", fontSize: 26, color: C.text, textAlign: 'center', marginBottom: 28, lineHeight: 1.3 }}>Come stai in questo momento?</p>
+        <MoodFace val={val}/>
+        <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 56, color: C.text, lineHeight: 1, margin: '16px 0 36px' }}>{val}</div>
         <div style={{ width: '100%', marginBottom: 48 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', color: C.muted, fontSize: 11, marginBottom: 10 }}>
             <span>0</span><span>10</span>
@@ -722,7 +737,7 @@ function MoodGate({ onBack, onContinue }) {
             style={{ width: '100%' }}/>
         </div>
         <button className="tap" onClick={() => onContinue(val)}
-          style={{ width: '100%', padding: '16px', borderRadius: 16, border: 'none', background: '#6B9080', color: '#fff', fontSize: 16, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", cursor: 'pointer' }}>
+          style={{ width: '100%', padding: '16px', borderRadius: 16, border: 'none', background: C.accent, color: '#fff', fontSize: 16, fontWeight: 600, fontFamily: "'DM Sans',sans-serif", cursor: 'pointer' }}>
           Continua →
         </button>
       </div>
