@@ -1454,7 +1454,7 @@ const PALETTES = [
 
 /* ─── MOOD CHART ─────────────────────────────────────────────────────────── */
 function MoodChart({ checkins }) {
-  const pts = checkins.slice(-30)
+  const pts = checkins.filter(c => c.mood != null).slice(-30)
   if (pts.length < 2) return null
   const W = 300, H = 80, pad = 8
   const xs = pts.map((_, i) => pad + (i / (pts.length - 1)) * (W - pad * 2))
@@ -1854,7 +1854,7 @@ export default function App() {
   }
 
   function handleAutoCI(ciData) {
-    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: ciData.emotionInt, chatId: ciData.chatId || null }
+    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: null, chatId: ciData.chatId || null }
     setCIs(p => [...p, ci])
     saveToSupabase('liv_checkins', ci)
   }
@@ -1884,7 +1884,8 @@ export default function App() {
     if (checkins.length > 0) {
       const sorted = [...checkins].sort((a, b) => a.date > b.date ? 1 : -1)
       const recent = sorted.slice(-20)
-      const avgMood = Math.round(recent.reduce((s, c) => s + Math.min(10, Math.max(0, c.mood || 0)), 0) / recent.length * 10) / 10
+      const moodCIs = recent.filter(c => c.mood != null)
+      const avgMood = moodCIs.length ? Math.round(moodCIs.reduce((s, c) => s + Math.min(10, Math.max(0, c.mood)), 0) / moodCIs.length * 10) / 10 : null
       const emoCount = {}
       recent.forEach(c => { if (c.emotion) emoCount[c.emotion] = (emoCount[c.emotion] || 0) + 1 })
       const topEmos = Object.entries(emoCount).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([e]) => e)
@@ -1892,7 +1893,7 @@ export default function App() {
       recent.forEach(c => { if (c.area) areaCount[c.area] = (areaCount[c.area] || 0) + 1 })
       const topAreas = Object.entries(areaCount).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([a]) => a)
       lines.push(`DATI CHECK-IN UMORE (ultimi ${recent.length}):`)
-      lines.push(`- Umore medio: ${avgMood}/10`)
+      if (avgMood != null) lines.push(`- Umore medio: ${avgMood}/10`)
       if (topEmos.length) lines.push(`- Emozioni più frequenti: ${topEmos.join(', ')}`)
       if (topAreas.length) lines.push(`- Aree più impattate: ${topAreas.join(', ')}`)
     }
