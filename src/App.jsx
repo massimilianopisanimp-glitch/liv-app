@@ -697,19 +697,53 @@ function CheckIn({ onBack, onDone }) {
 }
 
 /* ─── MOOD GATE ──────────────────────────────────────────────────────────── */
-function MoodFace({ val, size = 110 }) {
-  const mouth = val < 4
-    ? `M${size*.28} ${size*.68} Q${size*.5} ${size*.58} ${size*.72} ${size*.68}`
-    : val <= 6
-    ? `M${size*.28} ${size*.65} Q${size*.5} ${size*.65} ${size*.72} ${size*.65}`
-    : `M${size*.28} ${size*.60} Q${size*.5} ${size*.73} ${size*.72} ${size*.60}`
+function MoodFace({ val }) {
+  const mood = val
+  const pct = mood / 10
+  const eyeLx = 46, eyeRx = 66, eyeY = 58
+  const eyeRyL = mood < 1.5 ? 2 : mood < 3 ? 3 : mood < 5 ? 4 : mood < 7 ? 4.5 : 1
+  const eyeRxL = mood < 1.5 ? 3 : mood < 3 ? 3.5 : mood < 5 ? 4 : 4.5
+  const sparkR = (mood < 2 || mood >= 7.5) ? 0 : 1 + pct * 1.5
+  const sparkOp = (mood < 2 || mood >= 7.5) ? 0 : 0.85
+  const happyEyeL = `M${eyeLx-5} ${eyeY+1} Q${eyeLx} ${eyeY-5} ${eyeLx+5} ${eyeY+1}`
+  const happyEyeR = `M${eyeRx-5} ${eyeY+1} Q${eyeRx} ${eyeY-5} ${eyeRx+5} ${eyeY+1}`
+  const mouthPath = mood < 1.5 ? 'M42 72 Q56 67 70 72'
+    : mood < 3 ? 'M43 71 Q56 71 69 71'
+    : mood < 5 ? 'M43 70 Q56 74 69 70'
+    : mood < 7 ? 'M41 69 Q56 76 71 69'
+    : 'M39 68 Q56 79 73 68'
+  const fc = '#2d2520'
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none" style={{ transition: 'all .3s' }}>
-      <circle cx={size/2} cy={size/2} r={size/2-2} fill={`${C.accent}22`} stroke={C.accent} strokeWidth="2"/>
-      <ellipse cx={size*.35} cy={size*.42} rx={size*.045} ry={size*.055} fill={C.accent}/>
-      <ellipse cx={size*.65} cy={size*.42} rx={size*.045} ry={size*.055} fill={C.accent}/>
-      <path d={mouth} stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" style={{ transition: 'd .3s' }}/>
-    </svg>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 140, height: 155 }}>
+      <svg width="125" height="150" viewBox="0 0 120 145" fill="none" style={{ overflow: 'visible' }}>
+        <defs>
+          <radialGradient id="mgGlow" cx="38%" cy="35%" r="55%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
+            <stop offset="60%" stopColor={C.accent} />
+            <stop offset="100%" stopColor={C.accent} />
+          </radialGradient>
+          <radialGradient id="mgShine" cx="35%" cy="28%" r="35%">
+            <stop offset="0%" stopColor="white" stopOpacity={.25+pct*.25} />
+            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+        <ellipse cx="60" cy="108" rx="18" ry="4" fill="#8a8a8a" opacity={0.1+pct*0.15} style={{ transition: 'all .5s' }} />
+        <ellipse cx="60" cy="55" rx="44" ry="46" fill="url(#mgGlow)" style={{ transition: 'fill .5s' }} />
+        <ellipse cx="60" cy="55" rx="44" ry="46" fill="url(#mgShine)" />
+        {mood >= 7.5 ? <>
+          <path d={happyEyeL} stroke={fc} strokeWidth="2.8" strokeLinecap="round" fill="none" style={{ transition: 'all .45s' }} />
+          <path d={happyEyeR} stroke={fc} strokeWidth="2.8" strokeLinecap="round" fill="none" style={{ transition: 'all .45s' }} />
+        </> : <>
+          <ellipse cx={eyeLx} cy={eyeY} rx={eyeRxL} ry={eyeRyL} fill={fc} style={{ transition: 'all .45s' }} />
+          <ellipse cx={eyeRx} cy={eyeY} rx={eyeRxL} ry={eyeRyL} fill={fc} style={{ transition: 'all .45s' }} />
+          {mood >= 2 && mood < 7.5 && <>
+            <circle cx={eyeLx+1.8} cy={eyeY-1.5} r={sparkR} fill="white" opacity={sparkOp} style={{ transition: 'all .4s' }} />
+            <circle cx={eyeRx+1.8} cy={eyeY-1.5} r={sparkR} fill="white" opacity={sparkOp} style={{ transition: 'all .4s' }} />
+          </>}
+        </>}
+        <path d={mouthPath} stroke={C.accent} strokeWidth="2.5" strokeLinecap="round" fill="none" style={{ transition: 'd .45s' }} />
+      </svg>
+    </div>
   )
 }
 
