@@ -780,7 +780,7 @@ function MoodGate({ onBack, onContinue }) {
 }
 
 /* ─── CHAT ──────────────────────────────────────────────────────────────── */
-function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinder, onSaveChat, onAutoCI }) {
+function ChatView({ onBack, seed, moodSeed, sys, accent, title, subtitle, initMsg, isFinder, onSaveChat, onAutoCI }) {
   const firstMsg = initMsg || 'Ciao. Sono qui. Come stai in questo momento?'
   const autoStart = isFinder || !!seed
   // Se c'è un seed o è il finder, partiamo vuoti e generiamo il messaggio contestuale
@@ -931,7 +931,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
 
       if (onAutoCI && parsed.emotion && parsed.intensity && parsed.area) {
         console.log('[handleBack] creo auto check-in:', parsed.emotion, parsed.intensity, parsed.area)
-        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId })
+        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId, moodSeed: moodSeed ?? null })
         markChatProcessed(chatId)
         setToast(true)
         setTimeout(() => setToast(false), 3000)
@@ -1743,6 +1743,7 @@ export default function App() {
   const [accent, setAccent] = useStore('accent_v1', '#6B9080')
   const [screen, setScreen] = useState('home')
   const [seed, setSeed] = useState(null)
+  const [moodGateVal, setMoodGateVal] = useState(null)
   const [user, setUser] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
 
@@ -1801,7 +1802,7 @@ export default function App() {
       }
       if (migrated.length > 0) {
         // Carica subito nello stato
-        setCIs(migrated.map(c => c.auto ? { ...c, mood: null } : c))
+        setCIs(migrated.map(c => c.auto && (c.mood == null || c.mood === c.emotionInt) ? { ...c, mood: null } : c))
         // Salva su Supabase in background
         Promise.all(migrated.map(ci => supabase.from('liv_checkins').insert({ user_id: userId, data: ci })))
           .then(results => {
@@ -1817,7 +1818,7 @@ export default function App() {
           })
       }
     } else {
-      setCIs(remoteCheckins.map(c => c.auto ? { ...c, mood: null } : c))
+      setCIs(remoteCheckins.map(c => c.auto && (c.mood == null || c.mood === c.emotionInt) ? { ...c, mood: null } : c))
     }
 
     // Dedup chat solo per id — mantieni l'ultima occorrenza per ogni id
@@ -1854,7 +1855,7 @@ export default function App() {
   }
 
   function handleAutoCI(ciData) {
-    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: null, chatId: ciData.chatId || null }
+    const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: ciData.moodSeed != null ? ciData.moodSeed : null, chatId: ciData.chatId || null }
     setCIs(p => [...p, ci])
     saveToSupabase('liv_checkins', ci)
   }
@@ -1958,12 +1959,12 @@ export default function App() {
         {screen === 'profile' && <Profile checkins={checkins} chats={chats} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
         {screen === 'mood-gate' && <MoodGate
           onBack={() => setScreen('home')}
-          onContinue={v => { setSeed(`Mood iniziale: ${v}/10`); setScreen('chat') }}/>}
+          onContinue={v => { setMoodGateVal(v); setSeed(`Mood iniziale: ${v}/10`); setScreen('chat') }}/>}
         {screen === 'chat'    && <ChatView
-          onBack={() => { setScreen('home'); setSeed(null) }}
+          onBack={() => { setScreen('home'); setSeed(null); setMoodGateVal(null) }}
           onSaveChat={handleSaveChat}
           onAutoCI={handleAutoCI}
-          seed={seed} sys={buildChatSys()}
+          seed={seed} moodSeed={moodGateVal} sys={buildChatSys()}
           accent={C.teal}
           title="Liv" subtitle="in ascolto"
           isFinder={false}/>}
