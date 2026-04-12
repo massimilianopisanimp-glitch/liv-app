@@ -792,8 +792,30 @@ function ChatView({ onBack, seed, sys, accent, title, subtitle, initMsg, isFinde
   const [toast, setToast] = useState(false)
   const bot = useRef(null)
   const ta = useRef(null)
+  const streamBuf = useRef('')
+  const rafId = useRef(null)
 
-  useEffect(() => { bot.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, load])
+  useEffect(() => { bot.current?.scrollIntoView({ behavior: 'auto' }) }, [msgs, load])
+
+  function makeChunkHandler() {
+    streamBuf.current = ''
+    if (rafId.current) { cancelAnimationFrame(rafId.current); rafId.current = null }
+    return function onChunk(chunk) {
+      streamBuf.current += chunk
+      if (!rafId.current) {
+        rafId.current = requestAnimationFrame(() => {
+          rafId.current = null
+          const text = streamBuf.current
+          streamBuf.current = ''
+          sm(p => {
+            const u = [...p]
+            u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + text }
+            return u
+          })
+        })
+      }
+    }
+  }
   useEffect(() => {
     if (!seeded && autoStart) {
       setSd(true)
@@ -811,13 +833,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       }
       sm([{ role: 'assistant', content: '' }])
       setThinking(false)
-      streamAI([{ role: 'user', content: '[avvia]' }], contextSys, chunk => {
-        sm(p => {
-          const u = [...p]
-          u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chunk }
-          return u
-        })
-      })
+      streamAI([{ role: 'user', content: '[avvia]' }], contextSys, makeChunkHandler())
         .catch(() => {
           sm([{ role: 'assistant', content: firstMsg }])
         })
@@ -839,13 +855,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       } else {
         sm(p => [...p, { role: 'assistant', content: '' }])
         setThinking(false)
-        await streamAI(next, sys || SYS_CHAT, chunk => {
-          sm(p => {
-            const u = [...p]
-            u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chunk }
-            return u
-          })
-        })
+        await streamAI(next, sys || SYS_CHAT, makeChunkHandler())
       }
     } catch {
       sm(p => {
