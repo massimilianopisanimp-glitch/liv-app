@@ -1454,18 +1454,26 @@ const PALETTES = [
   { name: 'Rose',  hex: '#c07a8a' },
 ]
 
+// Restituisce il valore mood da usare per grafici/calcoli, seguendo la priorità:
+// 1. moodSeed (slider MoodGate) 2. mood (slider check-in manuale) 3. null (escludi)
+function getMoodVal(c) {
+  if (c.moodSeed != null) return c.moodSeed
+  if (c.mood != null) return c.mood
+  return null
+}
+
 /* ─── MOOD CHART ─────────────────────────────────────────────────────────── */
 function MoodChart({ checkins }) {
-  const pts = checkins.filter(c => c.mood != null).slice(-30)
+  const pts = checkins.map(c => ({ ...c, _mv: getMoodVal(c) })).filter(c => c._mv != null).slice(-30)
   if (pts.length < 2) return null
   const W = 300, H = 80, pad = 8
   const xs = pts.map((_, i) => pad + (i / (pts.length - 1)) * (W - pad * 2))
-  const ys = pts.map(c => H - pad - ((Math.min(10, Math.max(0, c.mood)) / 10) * (H - pad * 2)))
+  const ys = pts.map(c => H - pad - ((Math.min(10, Math.max(0, c._mv)) / 10) * (H - pad * 2)))
   const poly = xs.map((x, i) => `${x},${ys[i]}`).join(' ')
   const area = `M${xs[0]},${ys[0]} ` + xs.slice(1).map((x, i) => `L${x},${ys[i + 1]}`).join(' ') + ` L${xs[xs.length - 1]},${H - pad} L${xs[0]},${H - pad} Z`
   const last = pts[pts.length - 1]
   const clampV = v => Math.min(10, Math.max(0, v))
-  const avg = Math.round(pts.reduce((a, c) => a + clampV(c.mood), 0) / pts.length * 10) / 10
+  const avg = Math.round(pts.reduce((a, c) => a + clampV(c._mv), 0) / pts.length * 10) / 10
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 12 }}>
@@ -1475,7 +1483,7 @@ function MoodChart({ checkins }) {
         </div>
         <div style={{ textAlign: 'right' }}>
           <div style={{ color: C.muted, fontSize: 11, marginBottom: 2 }}>Ultimo</div>
-          <div style={{ color: C.text, fontSize: 18, fontWeight: 700 }}>{clampV(last.mood)}</div>
+          <div style={{ color: C.text, fontSize: 18, fontWeight: 700 }}>{clampV(last._mv)}</div>
         </div>
       </div>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
@@ -1889,8 +1897,8 @@ export default function App() {
     if (checkins.length > 0) {
       const sorted = [...checkins].sort((a, b) => a.date > b.date ? 1 : -1)
       const recent = sorted.slice(-20)
-      const moodCIs = recent.filter(c => c.mood != null)
-      const avgMood = moodCIs.length ? Math.round(moodCIs.reduce((s, c) => s + Math.min(10, Math.max(0, c.mood)), 0) / moodCIs.length * 10) / 10 : null
+      const moodCIs = recent.map(c => ({ ...c, _mv: getMoodVal(c) })).filter(c => c._mv != null)
+      const avgMood = moodCIs.length ? Math.round(moodCIs.reduce((s, c) => s + Math.min(10, Math.max(0, c._mv)), 0) / moodCIs.length * 10) / 10 : null
       const emoCount = {}
       recent.forEach(c => { if (c.emotion) emoCount[c.emotion] = (emoCount[c.emotion] || 0) + 1 })
       const topEmos = Object.entries(emoCount).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([e]) => e)
