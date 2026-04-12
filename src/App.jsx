@@ -886,29 +886,28 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       const chatId = Date.now()
       const preview = userMsgs[0]?.content?.slice(0, 100) || ''
 
-      const extractPrompt = '[SISTEMA: analizza questa conversazione e rispondimi SOLO con un oggetto JSON valido, nessun testo prima o dopo: {"emotion":"emozione prevalente","intensity":numero da 1 a 10,"area":"area di vita","temi":["tema1","tema2"],"insight":"frase riassuntiva in italiano"}. Emozioni valide: Ansia, Paura, Tristezza, Rabbia, Vergogna, Colpa, Frustrazione, Vuoto, Confusione, Noia, Eccitazione, Serenità, Speranza, Altro. Aree valide: Lavoro, Relazioni, Famiglia, Sociale, Futuro, Salute, Studio, Altro.]'
-      const extractMsgs = [...msgs, { role: 'user', content: extractPrompt }]
+      const conversation = msgs.map(m => `${m.role === 'user' ? 'Utente' : 'Liv'}: ${m.content}`).join('\n')
 
-      async function callExtract(msgs) {
+      async function callExtract() {
         const r = await fetch('/api/extract', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ messages: msgs }),
+          body: JSON.stringify({ conversation }),
         })
         if (!r.ok) throw new Error('Errore /api/extract')
-        const { text, error } = await r.json()
+        const { result, error } = await r.json()
         if (error) throw new Error(error)
-        return JSON.parse(text.replace(/```json|```/g, '').trim())
+        return JSON.parse(result.replace(/```json|```/g, '').trim())
       }
 
       async function extractWithRetry() {
         try {
-          return await callExtract(extractMsgs)
+          return await callExtract()
         } catch (err) {
           console.warn('[handleBack] estrazione fallita:', err.message, '— retry tra 2s')
           await new Promise(r => setTimeout(r, 2000))
           try {
-            return await callExtract(extractMsgs)
+            return await callExtract()
           } catch (err2) {
             console.error('[handleBack] retry fallito:', err2.message)
             return {}

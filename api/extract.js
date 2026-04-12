@@ -1,22 +1,17 @@
 import Anthropic from '@anthropic-ai/sdk'
-
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
-  const { messages } = req.body
-  if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: 'Messaggi non validi' })
-  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'API key non configurata' })
+  if (req.method !== 'POST') return res.status(405).end()
+  const { conversation } = req.body
   try {
-    const message = await client.messages.create({
+    const msg = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 150,
-      system: 'Rispondi SOLO con JSON valido. Nessun testo.',
-      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      system: 'Rispondi SOLO con un oggetto JSON valido. Nessun testo prima o dopo. Nessun markdown.',
+      messages: [{ role: 'user', content: `Analizza questa conversazione ed estrai: {"emotion":"emozione prevalente","intensity":numero 1-10,"area":"area di vita","temi":["tema1","tema2"],"insight":"frase breve"}. Emozioni: Ansia,Paura,Tristezza,Rabbia,Vergogna,Colpa,Frustrazione,Vuoto,Confusione,Noia,Eccitazione,Serenità,Speranza,Altro. Aree: Lavoro,Relazioni,Famiglia,Sociale,Futuro,Salute,Studio,Altro.\n\nConversazione:\n${conversation}` }]
     })
-    res.json({ text: message.content[0]?.text || '' })
-  } catch (error) {
-    console.error('Errore /api/extract:', error.message)
-    res.status(500).json({ error: error.message })
+    res.status(200).json({ result: msg.content[0].text })
+  } catch(e) {
+    res.status(500).json({ error: e.message })
   }
 }
