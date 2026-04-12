@@ -930,8 +930,10 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       onSaveChat(chatData)
 
       if (onAutoCI && parsed.emotion && parsed.intensity && parsed.area) {
-        console.log('[handleBack] creo auto check-in:', parsed.emotion, parsed.intensity, parsed.area)
-        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId, moodSeed: moodSeed ?? null })
+        const moodMatch = seed ? seed.match(/Mood iniziale:\s*(\d+)\/10/) : null
+        const moodVal = moodMatch ? parseInt(moodMatch[1], 10) : null
+        console.log('[handleBack] creo auto check-in:', parsed.emotion, parsed.intensity, parsed.area, '| mood slider:', moodVal)
+        onAutoCI({ emotion: parsed.emotion, emotionInt: parsed.intensity, area: parsed.area, chatId, moodSeed: moodVal })
         markChatProcessed(chatId)
         setToast(true)
         setTimeout(() => setToast(false), 3000)
