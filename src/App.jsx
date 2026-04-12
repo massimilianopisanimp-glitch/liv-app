@@ -1801,7 +1801,7 @@ export default function App() {
       }
       if (migrated.length > 0) {
         // Carica subito nello stato
-        setCIs(migrated)
+        setCIs(migrated.map(c => c.auto ? { ...c, mood: null } : c))
         // Salva su Supabase in background
         Promise.all(migrated.map(ci => supabase.from('liv_checkins').insert({ user_id: userId, data: ci })))
           .then(results => {
@@ -1817,7 +1817,7 @@ export default function App() {
           })
       }
     } else {
-      setCIs(remoteCheckins)
+      setCIs(remoteCheckins.map(c => c.auto ? { ...c, mood: null } : c))
     }
 
     // Dedup chat solo per id — mantieni l'ultima occorrenza per ogni id
