@@ -1464,7 +1464,7 @@ function getMoodVal(c) {
 
 /* ─── MOOD CHART ─────────────────────────────────────────────────────────── */
 function MoodChart({ checkins }) {
-  const pts = checkins.map(c => ({ ...c, _mv: getMoodVal(c) })).filter(c => c._mv != null).slice(-30)
+  const pts = [...checkins].sort((a, b) => a.id - b.id).map(c => ({ ...c, _mv: getMoodVal(c) })).filter(c => c._mv != null).slice(-30)
   console.log('[MoodChart] punti grafico:', pts.map(c => ({ id: c.id, _mv: c._mv, moodSeed: c.moodSeed, mood: c.mood, emotionInt: c.emotionInt, auto: c.auto })))
   if (pts.length < 2) return null
   const W = 300, H = 80, pad = 8
