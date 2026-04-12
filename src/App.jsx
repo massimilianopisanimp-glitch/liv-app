@@ -1739,6 +1739,12 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
             )}
           </>}
         </>}
+
+        {user?.email === ADMIN_EMAIL && (
+          <div style={{ textAlign: 'center', paddingBottom: 8 }}>
+            <a href="/admin" style={{ color: C.muted, fontSize: 11, textDecoration: 'none' }}>Pannello Admin</a>
+          </div>
+        )}
       </div>
     </div>
   )
