@@ -1958,7 +1958,10 @@ export default function App() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const u = session?.user ?? null
       setUser(u)
-      if (u && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) loadFromSupabase(u.id)
+      if (u && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED')) {
+        setAuthLoading(true)
+        loadFromSupabase(u.id).finally(() => setAuthLoading(false))
+      }
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -1978,7 +1981,14 @@ export default function App() {
     if (ciRes.error) console.error('[Supabase] errore checkins:', ciRes.error.message)
     if (chRes.error) console.error('[Supabase] errore chats:', chRes.error.message)
     if (rRes.error)  console.error('[Supabase] errore reports:', rRes.error.message)
-    if (profRes.data?.data) setUserProfile(profRes.data.data)
+    if (!profRes.error) {
+      if (profRes.data?.data) {
+        setUserProfile(profRes.data.data)
+        setOnb(true)   // profilo in Supabase = onboarding già fatto
+      } else {
+        setOnb(false)  // nessun profilo = mostra onboarding
+      }
+    }
 
     // Migrazione localStorage → Supabase
     // Se Supabase non ha check-in, cerca nei vecchi storage locali e migra
@@ -2165,11 +2175,15 @@ export default function App() {
       <Onboarding done={({ name, profile }) => {
         setUserName(name)
         setOnb(true)
-        if (profile && (profile.birthMonth || profile.birthYear || profile.gender)) {
-          setUserProfile(profile)
-          if (user) {
-            supabase.from('liv_profiles').upsert({ user_id: user.id, data: profile }, { onConflict: 'user_id' })
-          }
+        const profileData = {
+          birthMonth: profile?.birthMonth || null,
+          birthYear: profile?.birthYear || null,
+          gender: profile?.gender || null,
+          completedAt: new Date().toISOString(),
+        }
+        setUserProfile(profileData)
+        if (user) {
+          supabase.from('liv_profiles').upsert({ user_id: user.id, data: profileData }, { onConflict: 'user_id' })
         }
       }}/>
     </div>
