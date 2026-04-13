@@ -18,12 +18,32 @@ export default async function handler(req, res) {
     return res.status(403).json({ error: 'Forbidden' })
   }
 
-  const { data: chats, error: chatsErr } = await supabase
-    .from('liv_chats')
-    .select('user_id, created_at, data')
-    .order('created_at', { ascending: false })
+  const [chatsRes, profilesRes] = await Promise.all([
+    supabase.from('liv_chats').select('user_id, created_at, data').order('created_at', { ascending: false }),
+    supabase.from('liv_profiles').select('user_id, data'),
+  ])
 
-  if (chatsErr) return res.status(500).json({ error: chatsErr.message })
+  if (chatsRes.error) return res.status(500).json({ error: chatsRes.error.message })
 
-  res.status(200).json({ chats: chats || [] })
+  // Indicizza profili per user_id
+  const profilesByUser = {}
+  ;(profilesRes.data || []).forEach(p => { profilesByUser[p.user_id] = p.data })
+
+  // Restituisce solo campi non sensibili + dati profilo anonimi
+  const chats = (chatsRes.data || []).map(c => {
+    const prof = profilesByUser[c.user_id] || {}
+    const age = prof.birthYear ? new Date().getFullYear() - parseInt(prof.birthYear) : null
+    return {
+      user_id: c.user_id,
+      created_at: c.created_at,
+      msgCount: c.data?.msgCount || 0,
+      emotion: c.data?.emotion || null,
+      area: c.data?.area || null,
+      moodSeed: c.data?.moodSeed || null,
+      gender: prof.gender || null,
+      age,
+    }
+  })
+
+  res.status(200).json({ chats })
 }

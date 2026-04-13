@@ -368,6 +368,9 @@ function Onboarding({ done }) {
   const [legal, setLegal] = useState(false)
   const [name, setName] = useState('')
   const [focus, setFocus] = useState('')
+  const [birthMonth, setBirthMonth] = useState('')
+  const [birthYear, setBirthYear] = useState('')
+  const [gender, setGender] = useState('')
 
   const FOCUSES = [
     { id: 'ansia',    emoji: '🌊', label: 'Ansia e stress',      desc: 'Pensieri che non si spengono' },
@@ -381,7 +384,7 @@ function Onboarding({ done }) {
     { title: 'Non è terapia.', body: 'Liv non sostituisce uno psicologo.\nSe stai attraversando un momento difficile, siamo qui per aiutarti a trovare il giusto tipo di percorso psicologico.', icon: <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.roseDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico n="shield" sz={36} c={C.rose}/></div> },
     { isLegal: true },
   ]
-  const phaseToIdx = { intro: slide, name: 4, focus: 5 }
+  const phaseToIdx = { intro: slide, name: 4, profile: 5, focus: 6 }
   const curDot = phaseToIdx[phase] ?? 0
 
   return (
@@ -390,7 +393,7 @@ function Onboarding({ done }) {
 
       {/* dots progress */}
       <div style={{ paddingTop: 52, display: 'flex', justifyContent: 'center', gap: 6, zIndex: 1, flexShrink: 0 }}>
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 7 }).map((_, i) => (
           <div key={i} style={{ width: i === curDot ? 24 : 6, height: 6, borderRadius: 3, background: i === curDot ? C.purple : i < curDot ? C.purpleDim : C.faint, transition: 'all .35s' }} />
         ))}
       </div>
@@ -424,6 +427,7 @@ function Onboarding({ done }) {
               </div>
               <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.65 }}>Confermo di avere <strong style={{ color: C.text }}>più di 18 anni</strong>, di aver letto la Privacy Policy e acconsento al trattamento dei dati.</p>
             </div>
+            <p style={{ color: C.muted, fontSize: 11, lineHeight: 1.7, textAlign: 'center', padding: '0 4px' }}>Continuando dichiari di aver letto e accettato che Liv è uno strumento di supporto emotivo e non sostituisce un professionista della salute mentale. Le tue conversazioni restano sul tuo dispositivo. Solo dati aggregati anonimi vengono condivisi per migliorare il servizio.</p>
           </div>
         )}
 
@@ -435,6 +439,44 @@ function Onboarding({ done }) {
             <input autoFocus placeholder="Il tuo nome..." value={name} onChange={e => setName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && name.trim() && setPhase('focus')}
               style={{ width: '100%', padding: '16px 20px', borderRadius: 16, border: `1.5px solid ${name.trim() ? C.accent : C.border}`, background: C.card, color: C.text, fontSize: 18, outline: 'none', transition: 'border-color .2s' }}/>
+          </div>
+        )}
+
+        {/* PROFILO */}
+        {phase === 'profile' && (
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+            <h2 style={{ fontSize: 30, fontWeight: 700, color: C.text, marginBottom: 10, fontFamily: "'DM Serif Display',serif" }}>Qualcosa su di te</h2>
+            <p style={{ color: C.muted, fontSize: 15, marginBottom: 32, lineHeight: 1.6 }}>Aiuta Liv a capire meglio chi sei. Opzionale.</p>
+            <div style={{ marginBottom: 20 }}>
+              <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>Mese e anno di nascita</p>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <select value={birthMonth} onChange={e => setBirthMonth(e.target.value)}
+                  style={{ flex: 1, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${birthMonth ? C.accent : C.border}`, background: C.card, color: birthMonth ? C.text : C.muted, fontSize: 15, outline: 'none' }}>
+                  <option value="">Mese</option>
+                  {['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'].map((m, i) => (
+                    <option key={i+1} value={i+1}>{m}</option>
+                  ))}
+                </select>
+                <select value={birthYear} onChange={e => setBirthYear(e.target.value)}
+                  style={{ flex: 1, padding: '12px 14px', borderRadius: 12, border: `1.5px solid ${birthYear ? C.accent : C.border}`, background: C.card, color: birthYear ? C.text : C.muted, fontSize: 15, outline: 'none' }}>
+                  <option value="">Anno</option>
+                  {Array.from({ length: 71 }, (_, i) => 2010 - i).map(y => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>Sesso</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                {['Uomo','Donna','Preferisco non specificare'].map(g => (
+                  <button key={g} className="tap" onClick={() => setGender(g)}
+                    style={{ flex: 1, padding: '11px 6px', borderRadius: 12, border: `1.5px solid ${gender === g ? C.accent : C.border}`, background: gender === g ? C.accentDim : C.card, color: gender === g ? C.accent : C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                    {g}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -465,13 +507,19 @@ function Onboarding({ done }) {
           <Btn variant="primary" onClick={() => { if (slide < slides.length - 1) setSlide(slide + 1) }}>Avanti →</Btn>
         )}
         {phase === 'intro' && slides[slide].isLegal && (
-          <Btn variant="grad" onClick={() => legal && setPhase('name')} disabled={!legal}>Inizia il mio percorso →</Btn>
+          <Btn variant="grad" onClick={() => legal && setPhase('name')} disabled={!legal}>Accetto e inizia →</Btn>
         )}
         {phase === 'name' && (
-          <Btn variant="primary" onClick={() => name.trim() && setPhase('focus')} disabled={!name.trim()}>Continua →</Btn>
+          <Btn variant="primary" onClick={() => name.trim() && setPhase('profile')} disabled={!name.trim()}>Continua →</Btn>
+        )}
+        {phase === 'profile' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <Btn variant="primary" onClick={() => setPhase('focus')}>Continua →</Btn>
+            <button onClick={() => setPhase('focus')} style={{ background: 'none', border: 'none', color: C.muted, fontSize: 13, cursor: 'pointer', padding: '4px 0' }}>Puoi saltare questo passaggio</button>
+          </div>
         )}
         {phase === 'focus' && focus && (
-          <Btn variant="grad" onClick={() => done({ name, focus })}>Entra in Liv →</Btn>
+          <Btn variant="grad" onClick={() => done({ name, focus, profile: { birthMonth: birthMonth || null, birthYear: birthYear ? parseInt(birthYear) : null, gender: gender || null } })}>Entra in Liv →</Btn>
         )}
       </div>
     </div>
@@ -1283,8 +1331,15 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
             })() : (() => {
               const evKey = ev.id ?? i
               const isOpen = expandedChat === evKey
+              // Leggi campi sensibili da localStorage come fallback (local-first)
+              const localMeta = ev.id ? (() => { try { return JSON.parse(localStorage.getItem(`liv_chat_meta_${ev.id}`)) } catch { return null } })() : null
+              const localMsgs = ev.id ? (() => { try { return JSON.parse(localStorage.getItem(`liv_msgs_${ev.id}`)) } catch { return null } })() : null
+              const preview = ev.preview || localMeta?.preview || null
+              const temi = ev.temi?.length ? ev.temi : (localMeta?.temi || [])
+              const insight = ev.insight || localMeta?.insight || null
+              const messages = ev.messages?.length ? ev.messages : (localMsgs || [])
               return <>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: ev.preview ? 6 : 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: preview ? 6 : 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                     <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
                     <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
@@ -1294,20 +1349,20 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                     <span style={{ color: C.muted, fontSize: 16, lineHeight: 1, display: 'inline-block', transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}>›</span>
                   </div>
                 </div>
-                {ev.preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: ev.temi?.length ? 4 : 0 }}>{ev.preview}</p>}
-                {ev.temi && ev.temi.length > 0 && (
+                {preview && <p style={{ color: C.text, fontSize: 13, lineHeight: 1.55, marginBottom: temi.length ? 4 : 0 }}>{preview}</p>}
+                {temi.length > 0 && (
                   <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
-                    {ev.temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
+                    {temi.map((t, ti) => <span key={ti} style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{t}</span>)}
                   </div>
                 )}
-                {!isOpen && ev.insight && (
+                {!isOpen && insight && (
                   <div style={{ marginTop: 8, padding: '8px 12px', background: `${C.accent}08`, borderRadius: 10, border: `0.5px solid ${C.accent}18` }}>
-                    <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{ev.insight}</p>
+                    <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{insight}</p>
                   </div>
                 )}
                 {isOpen && (
                   <div style={{ marginTop: 12, borderTop: `0.5px solid ${C.border}`, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {ev.messages?.length > 0 ? ev.messages.map((m, mi) => (
+                    {messages.length > 0 ? messages.map((m, mi) => (
                       <div key={mi} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
                         {m.role === 'assistant' && (
                           <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
@@ -1321,7 +1376,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                         }}>{m.content}</div>
                       </div>
                     )) : (
-                      <p style={{ color: C.muted, fontSize: 12, fontStyle: 'italic' }}>Messaggi non disponibili per questa conversazione.</p>
+                      <p style={{ color: C.muted, fontSize: 12, fontStyle: 'italic' }}>Conversazione non disponibile su questo dispositivo.</p>
                     )}
                   </div>
                 )}
@@ -1758,7 +1813,6 @@ function AdminScreen() {
   const [chats, setChats] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [expanded, setExpanded] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -1799,12 +1853,12 @@ function AdminScreen() {
     </div>
   )
 
-  // Statistiche aggregate
+  // Statistiche aggregate (i campi ora sono flat, non in .data)
   const uniqueUsers = new Set(chats.map(c => c.user_id)).size
-  const totalMsgs = chats.reduce((s, c) => s + (c.data?.msgCount || 0), 0)
+  const totalMsgs = chats.reduce((s, c) => s + (c.msgCount || 0), 0)
   const avgMsgs = chats.length ? Math.round(totalMsgs / chats.length * 10) / 10 : 0
   const emoCount = {}
-  chats.forEach(c => { if (c.data?.emotion) emoCount[c.data.emotion] = (emoCount[c.data.emotion] || 0) + 1 })
+  chats.forEach(c => { if (c.emotion) emoCount[c.emotion] = (emoCount[c.emotion] || 0) + 1 })
   const topEmos = Object.entries(emoCount).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
   const anonId = uid => 'Utente_' + uid.slice(0, 8)
@@ -1848,61 +1902,23 @@ function AdminScreen() {
         {/* Lista conversazioni */}
         <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 18, color: C.text, marginBottom: 12 }}>Conversazioni</div>
         {chats.map((c, i) => {
-          const d = c.data || {}
           const key = c.created_at + i
-          const isOpen = expanded === key
           return (
-            <div key={key} onClick={() => setExpanded(isOpen ? null : key)} className="tap"
-              style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8, cursor: 'pointer' }}>
-              {/* card header */}
+            <div key={key} style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>{anonId(c.user_id)}</span>
                   <span style={{ color: C.muted, fontSize: 11 }}>{fmtTs(c.created_at)}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ color: C.muted, fontSize: 11 }}>{d.msgCount || 0} msg</span>
-                  <span style={{ color: C.muted, fontSize: 16, display: 'inline-block', transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)', transition: 'transform .2s' }}>›</span>
-                </div>
+                <span style={{ color: C.muted, fontSize: 11 }}>{c.msgCount} msg</span>
               </div>
-              {/* emotion + area */}
-              {(d.emotion || d.area) && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: d.temi?.length || d.insight ? 6 : 0 }}>
-                  {d.emotion && <span style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{d.emotion}</span>}
-                  {d.area && <span style={{ background: C.faint, color: C.muted, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{d.area}</span>}
-                </div>
-              )}
-              {/* temi */}
-              {d.temi?.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: d.insight ? 6 : 0 }}>
-                  {d.temi.map((t, ti) => <span key={ti} style={{ background: C.faint, color: C.muted, padding: '2px 8px', borderRadius: 20, fontSize: 10 }}>{t}</span>)}
-                </div>
-              )}
-              {/* insight */}
-              {!isOpen && d.insight && (
-                <p style={{ color: 'rgba(0,0,0,.5)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic', marginTop: 4 }}>{d.insight}</p>
-              )}
-              {/* messaggi espansi */}
-              {isOpen && (
-                <div style={{ marginTop: 12, borderTop: `0.5px solid ${C.border}`, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {d.messages?.length > 0 ? d.messages.map((m, mi) => (
-                    <div key={mi} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
-                      {m.role === 'assistant' && (
-                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 10, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
-                      )}
-                      <div style={{
-                        maxWidth: '80%', padding: '8px 12px', fontSize: 12, lineHeight: 1.6, whiteSpace: 'pre-wrap',
-                        borderRadius: m.role === 'assistant' ? '14px 14px 14px 3px' : '14px 14px 3px 14px',
-                        background: m.role === 'assistant' ? '#fff' : C.accent,
-                        border: m.role === 'assistant' ? `0.5px solid ${C.border}` : 'none',
-                        color: m.role === 'assistant' ? C.text : '#fff',
-                      }}>{m.content}</div>
-                    </div>
-                  )) : (
-                    <p style={{ color: C.muted, fontSize: 12, fontStyle: 'italic' }}>Messaggi non disponibili.</p>
-                  )}
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {c.emotion && <span style={{ background: C.accentDim, color: C.accent, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{c.emotion}</span>}
+                {c.area && <span style={{ background: C.faint, color: C.muted, padding: '2px 10px', borderRadius: 20, fontSize: 11 }}>{c.area}</span>}
+                {c.moodSeed != null && <span style={{ background: C.faint, color: C.muted, padding: '2px 10px', borderRadius: 20, fontSize: 11 }}>Mood {c.moodSeed}/10</span>}
+                {c.gender && c.gender !== 'Preferisco non specificare' && <span style={{ background: C.faint, color: C.muted, padding: '2px 10px', borderRadius: 20, fontSize: 11 }}>{c.gender}</span>}
+                {c.age != null && <span style={{ background: C.faint, color: C.muted, padding: '2px 10px', borderRadius: 20, fontSize: 11 }}>{c.age} anni</span>}
+              </div>
             </div>
           )
         })}
@@ -1921,6 +1937,7 @@ export default function App() {
   const [chats, setChats] = useStore('chats_v1', [])
   const [reports, setReports] = useStore('reports_v1', [])
   const [accent, setAccent] = useStore('accent_v1', '#6B9080')
+  const [userProfile, setUserProfile] = useStore('profile_v1', null)
   const [screen, setScreen] = useState('home')
   const [seed, setSeed] = useState(null)
   const [moodGateVal, setMoodGateVal] = useState(null)
@@ -1949,10 +1966,11 @@ export default function App() {
   // Carica tutti i dati da Supabase — fonte autoritativa quando loggato
   async function loadFromSupabase(userId) {
     console.log('[Supabase] loadFromSupabase userId:', userId)
-    const [ciRes, chRes, rRes] = await Promise.all([
+    const [ciRes, chRes, rRes, profRes] = await Promise.all([
       supabase.from('liv_checkins').select('data').eq('user_id', userId).order('created_at'),
       supabase.from('liv_chats').select('data').eq('user_id', userId).order('created_at'),
       supabase.from('liv_reports').select('data').eq('user_id', userId).order('created_at'),
+      supabase.from('liv_profiles').select('data').eq('user_id', userId).maybeSingle(),
     ])
     console.log('[Supabase] checkins:', ciRes.data, ciRes.error)
     console.log('[Supabase] chats:', chRes.data, chRes.error)
@@ -1960,6 +1978,7 @@ export default function App() {
     if (ciRes.error) console.error('[Supabase] errore checkins:', ciRes.error.message)
     if (chRes.error) console.error('[Supabase] errore chats:', chRes.error.message)
     if (rRes.error)  console.error('[Supabase] errore reports:', rRes.error.message)
+    if (profRes.data?.data) setUserProfile(profRes.data.data)
 
     // Migrazione localStorage → Supabase
     // Se Supabase non ha check-in, cerca nei vecchi storage locali e migra
@@ -2025,7 +2044,8 @@ export default function App() {
   function handleCIDone(data, s) {
     const ci = { ...data, date: new Date().toISOString().split('T')[0], id: Date.now() }
     setCIs(p => [...p, ci])
-    saveToSupabase('liv_checkins', ci)   // no-op se non loggato
+    const { preview: _p, ...ciMin } = ci
+    saveToSupabase('liv_checkins', ciMin)   // no-op se non loggato
     setSeed(s)
     setScreen('chat')
   }
@@ -2039,27 +2059,55 @@ export default function App() {
   function handleAutoCI(ciData) {
     const ci = { ...ciData, date: new Date().toISOString().split('T')[0], id: Date.now(), auto: true, mood: ciData.moodSeed != null ? ciData.moodSeed : null, chatId: ciData.chatId || null }
     setCIs(p => [...p, ci])
-    saveToSupabase('liv_checkins', ci)
+    const { preview: _p, ...ciMin } = ci
+    saveToSupabase('liv_checkins', ciMin)
   }
 
   function handleSaveChat(chatData) {
     setChats(p => [...p, chatData])
-    saveToSupabase('liv_chats', chatData)
+    // Salva campi sensibili solo in localStorage
+    if (chatData.id) {
+      const { preview, temi, insight, domanda_riflessiva } = chatData
+      localStorage.setItem(`liv_chat_meta_${chatData.id}`, JSON.stringify({ preview, temi, insight, domanda_riflessiva }))
+      if (chatData.messages?.length) {
+        localStorage.setItem(`liv_msgs_${chatData.id}`, JSON.stringify(chatData.messages))
+      }
+    }
+    // Supabase: solo campi non sensibili
+    const { preview: _p, temi: _t, insight: _i, domanda_riflessiva: _d, messages: _m, ...minChat } = chatData
+    saveToSupabase('liv_chats', minChat)
   }
 
   // Costruisce il system prompt del finder con il contesto dati dell'utente
   function buildChatSys() {
+    let base = SYS_CHAT
+    // Profilo utente
+    if (userProfile) {
+      const parts = []
+      if (userProfile.gender && userProfile.gender !== 'Preferisco non specificare') parts.push(userProfile.gender === 'Uomo' ? 'un uomo' : 'una donna')
+      if (userProfile.birthYear) {
+        const age = new Date().getFullYear() - parseInt(userProfile.birthYear)
+        const decade = Math.floor(age / 10) * 10
+        parts.push(`di circa ${decade} anni`)
+      }
+      if (parts.length > 0) {
+        base = base + `\n\nPROFILO UTENTE: Stai parlando con ${parts.join(' ')}.`
+      }
+    }
     const recent = [...chats]
       .sort((a, b) => (a.date > b.date ? 1 : -1))
       .slice(-5)
-    if (recent.length === 0) return SYS_CHAT
+    if (recent.length === 0) return base
     const lines = recent.map(c => {
-      const temiStr = c.temi?.length ? `Temi: ${c.temi.join(', ')}. ` : ''
-      const insightStr = c.insight ? `"${c.insight.slice(0, 150)}"` : (c.preview ? `"${c.preview.slice(0, 150)}"` : '')
+      const localMeta = c.id ? (() => { try { return JSON.parse(localStorage.getItem(`liv_chat_meta_${c.id}`)) } catch { return null } })() : null
+      const temi = c.temi?.length ? c.temi : (localMeta?.temi || [])
+      const insight = c.insight || localMeta?.insight || c.preview || localMeta?.preview || null
+      const temiStr = temi.length ? `Temi: ${temi.join(', ')}. ` : ''
+      const insightStr = insight ? `"${insight.slice(0, 150)}"` : ''
       return `[${c.date}] - ${temiStr}${insightStr}`
     })
     const ctx = `\n\nCONVERSAZIONI PRECEDENTI (usa questo contesto per personalizzare le risposte):\n${lines.join('\n')}`
-    return SYS_CHAT + ctx
+    return base + ctx
   }
 
   function buildFinderSys() {
@@ -2114,7 +2162,16 @@ export default function App() {
   // 2 — Onboarding (una sola volta, indipendente dall'auth)
   if (!onb) return (
     <div className="app-shell">
-      <Onboarding done={({ name }) => { setUserName(name); setOnb(true) }}/>
+      <Onboarding done={({ name, profile }) => {
+        setUserName(name)
+        setOnb(true)
+        if (profile && (profile.birthMonth || profile.birthYear || profile.gender)) {
+          setUserProfile(profile)
+          if (user) {
+            supabase.from('liv_profiles').upsert({ user_id: user.id, data: profile }, { onConflict: 'user_id' })
+          }
+        }
+      }}/>
     </div>
   )
 
