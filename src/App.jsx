@@ -227,17 +227,15 @@ async function streamAI(msgs, sys, onChunk) {
 
 /* ─── LOGO ─────────────────────────────────────────────────────────────── */
 function Logo({ size = 28 }) {
-  const r = Math.round(size * 0.28)
   return (
     <div style={{
-      width: size, height: size, borderRadius: r,
+      width: size, height: size, borderRadius: '50%',
       background: C.accent,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      color: '#fff', fontWeight: 700,
-      fontSize: Math.round(size * 0.52),
-      fontFamily: "'DM Serif Display', serif",
       flexShrink: 0, userSelect: 'none',
-    }}>L</div>
+    }}>
+      <img src="/logo.png" alt="Liv" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
+    </div>
   )
 }
 
@@ -998,7 +996,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         <button className="tap" onClick={handleBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}>
           <Ico n="back" sz={22} c={C.muted}/>
         </button>
-        <div style={{ width: 38, height: 38, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 17, fontWeight: 400, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
+        <div style={{ width: 38, height: 38, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><img src="/logo.png" alt="Liv" style={{ width: '65%', height: '65%', objectFit: 'contain' }} /></div>
         <div style={{ flex: 1 }}>
           <div style={{ color: C.text, fontWeight: 400, fontSize: 16, fontFamily: "'DM Serif Display',serif", lineHeight: 1.1 }}>{title || 'Liv'}</div>
           <div style={{ color: C.muted, fontSize: 11, marginTop: 1 }}>{subtitle || 'in ascolto'}</div>
@@ -1015,7 +1013,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         {msgs.map((m, i) => (
           <div key={i} className={i === msgs.length - 1 ? 'fu' : ''} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8 }}>
             {m.role === 'assistant' && (
-              <div style={{ width: 26, height: 26, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 12, fontWeight: 400, color: '#fff', fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>L</div>
+              <div style={{ width: 26, height: 26, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2 }}><img src="/logo.png" alt="Liv" style={{ width: '65%', height: '65%', objectFit: 'contain' }} /></div>
             )}
             <div style={{
               maxWidth: '78%',
