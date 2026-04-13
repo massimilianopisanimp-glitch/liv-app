@@ -1503,10 +1503,11 @@ function AuthScreen({ onBack = null, onDone }) {
 
 /* ─── ACCENT PALETTES ───────────────────────────────────────────────────── */
 const PALETTES = [
-  { name: 'Sage',  hex: '#6B9080' },
-  { name: 'Amber', hex: '#b8a07a' },
-  { name: 'Blue',  hex: '#6b8cce' },
-  { name: 'Rose',  hex: '#c07a8a' },
+  { name: 'Sage',   hex: '#6B9080' },
+  { name: 'Amber',  hex: '#b8a07a' },
+  { name: 'Blue',   hex: '#6b8cce' },
+  { name: 'Rose',   hex: '#c07a8a' },
+  { name: 'Coral',  hex: '#E8725C' },
 ]
 
 // Restituisce il valore mood da usare per grafici/calcoli, seguendo la priorità:
