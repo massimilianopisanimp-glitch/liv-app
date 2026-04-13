@@ -469,7 +469,7 @@ function Onboarding({ done }) {
             <div style={{ marginBottom: 8 }}>
               <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>Sesso</p>
               <div style={{ display: 'flex', gap: 8 }}>
-                {['Uomo','Donna','Preferisco non specificare'].map(g => (
+                {['Maschio','Femmina','Preferisco non specificare'].map(g => (
                   <button key={g} className="tap" onClick={() => setGender(g)}
                     style={{ flex: 1, padding: '11px 6px', borderRadius: 12, border: `1.5px solid ${gender === g ? C.accent : C.border}`, background: gender === g ? C.accentDim : C.card, color: gender === g ? C.accent : C.muted, fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                     {g}
@@ -2094,7 +2094,7 @@ export default function App() {
     // Profilo utente
     if (userProfile) {
       const parts = []
-      if (userProfile.gender && userProfile.gender !== 'Preferisco non specificare') parts.push(userProfile.gender === 'Uomo' ? 'un uomo' : 'una donna')
+      if (userProfile.gender && userProfile.gender !== 'Preferisco non specificare') parts.push(userProfile.gender === 'Maschio' ? 'un uomo' : 'una donna')
       if (userProfile.birthYear) {
         const age = new Date().getFullYear() - parseInt(userProfile.birthYear)
         const decade = Math.floor(age / 10) * 10
