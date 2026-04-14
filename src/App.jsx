@@ -1071,6 +1071,215 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
   )
 }
 
+/* ─── PHQ-9 / GAD-7 TESTS ───────────────────────────────────────────────── */
+const PHQ9 = {
+  id: 'phq9', name: 'Umore e depressione', subtitle: 'PHQ-9',
+  questions: [
+    'Scarso interesse o piacere nel fare le cose',
+    'Sentirsi giù, depresso/a o senza speranza',
+    'Difficoltà ad addormentarsi, a restare sveglio/a, o dormire troppo',
+    'Sentirsi stanco/a o avere poca energia',
+    'Scarso appetito o mangiare troppo',
+    'Sentirsi in colpa o pensare di essere un fallimento',
+    'Difficoltà a concentrarsi (leggere, guardare la TV)',
+    'Muoversi o parlare così lentamente che gli altri se ne accorgono, oppure il contrario',
+    'Pensieri di farsi del male o che sarebbe meglio essere morti',
+  ],
+  scale: ['Mai', 'Alcuni giorni', 'Più della metà dei giorni', 'Quasi ogni giorno'],
+  maxScore: 27,
+  getResult: s => s <= 4
+    ? { cat: 'Nessun sintomo significativo', desc: 'Il tuo umore sembra nella norma. Continua a prenderti cura di te.' }
+    : s <= 9
+    ? { cat: 'Sintomi lievi', desc: 'Stai attraversando un momento un po\' appesantito. Piccole attenzioni quotidiane possono fare la differenza.' }
+    : s <= 14
+    ? { cat: 'Sintomi moderati', desc: 'Alcune aree della tua vita emotiva meritano attenzione. Potrebbe essere utile parlarne con qualcuno.' }
+    : s <= 19
+    ? { cat: 'Sintomi moderatamente gravi', desc: 'Stai portando un peso significativo. Un supporto professionale potrebbe aiutarti a stare meglio.' }
+    : { cat: 'Sintomi gravi', desc: 'Quello che stai vivendo è intenso. Ti incoraggiamo a cercare supporto professionale.' },
+}
+
+const GAD7 = {
+  id: 'gad7', name: 'Ansia', subtitle: 'GAD-7',
+  questions: [
+    'Sentirsi nervoso/a, ansioso/a o con i nervi a fior di pelle',
+    'Non riuscire a smettere di preoccuparsi o a controllare le preoccupazioni',
+    'Preoccuparsi troppo per cose diverse',
+    'Difficoltà a rilassarsi',
+    'Essere così irrequieto/a da non riuscire a stare seduto/a fermi',
+    'Diventare facilmente infastidito/a o irritabile',
+    'Sentire la paura che stia per accadere qualcosa di terribile',
+  ],
+  scale: ['Mai', 'Alcuni giorni', 'Più della metà dei giorni', 'Quasi ogni giorno'],
+  maxScore: 21,
+  getResult: s => s <= 4
+    ? { cat: 'Nessun sintomo significativo', desc: 'Il tuo livello di ansia sembra nella norma. Continua così.' }
+    : s <= 9
+    ? { cat: 'Ansia lieve', desc: 'Un po\' di tensione è normale. Se persiste, potrebbe valere la pena parlarne.' }
+    : s <= 14
+    ? { cat: 'Ansia moderata', desc: 'L\'ansia sta influenzando la tua quotidianità. Considera di parlarne con un professionista.' }
+    : { cat: 'Ansia grave', desc: 'Stai vivendo un livello elevato di ansia. Cercare supporto professionale può aiutarti molto.' },
+}
+
+function Tests({ onStartChat, onFinder, onSaveReport }) {
+  const [phase, setPhase] = useState('select') // select | disclaimer | running | result
+  const [test, setTest] = useState(null)
+  const [answers, setAnswers] = useState([])
+  const [qIdx, setQIdx] = useState(0)
+  const [result, setResult] = useState(null)
+
+  function pick(t) { setTest(t); setAnswers([]); setQIdx(0); setResult(null); setPhase('disclaimer') }
+  function reset() { setPhase('select'); setTest(null); setAnswers([]); setQIdx(0); setResult(null) }
+
+  function answer(val) {
+    const next = [...answers, val]
+    setAnswers(next)
+    if (qIdx + 1 < test.questions.length) {
+      setQIdx(i => i + 1)
+    } else {
+      const score = next.reduce((a, b) => a + b, 0)
+      const r = { ...test.getResult(score), score, testId: test.id, testName: test.name, testSubtitle: test.subtitle, maxScore: test.maxScore, date: new Date().toISOString() }
+      setResult(r)
+      if (onSaveReport) onSaveReport({ type: 'psychometric', ...r })
+      setPhase('result')
+    }
+  }
+
+  const resultColor = result
+    ? result.score <= 4 ? C.teal : result.score <= 9 ? C.amber : result.score > 14 ? C.rose : C.amber
+    : C.accent
+
+  /* ── RESULT ── */
+  if (phase === 'result' && result) {
+    const isHigh = result.score >= 15
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+          <button className="tap" onClick={reset} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
+          <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Risultato · {result.testSubtitle}</span>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '28px 20px 36px' }} className="fu">
+          <div style={{ textAlign: 'center', marginBottom: 28 }}>
+            <div style={{ width: 84, height: 84, borderRadius: '50%', background: resultColor + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', border: `2px solid ${resultColor}33` }}>
+              <span style={{ fontSize: 34, fontWeight: 700, color: resultColor, fontFamily: "'DM Serif Display',serif" }}>{result.score}</span>
+            </div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: C.muted, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8 }}>{result.testName} · su {result.maxScore}</div>
+            <h2 style={{ fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", color: resultColor, marginBottom: 10, lineHeight: 1.25 }}>{result.cat}</h2>
+            <p style={{ color: C.muted, fontSize: 14, lineHeight: 1.75, maxWidth: 300, margin: '0 auto' }}>{result.desc}</p>
+          </div>
+
+          <Card style={{ marginBottom: 12, background: C.faint, border: `1px solid ${C.border}` }}>
+            <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.7 }}>Questo strumento è solo per autovalutazione e non costituisce diagnosi. I risultati non sostituiscono il parere di un professionista della salute mentale.</p>
+          </Card>
+
+          {isHigh && (
+            <div style={{ background: C.roseDim, border: `1px solid ${C.rose}44`, borderRadius: 16, padding: '14px 16px', marginBottom: 12 }}>
+              <div style={{ color: C.rose, fontWeight: 700, fontSize: 14, marginBottom: 6 }}>Se stai attraversando un momento difficile</div>
+              <div style={{ color: C.text, fontSize: 13, lineHeight: 1.65 }}>Considera di parlare con qualcuno.<br/><strong>Telefono Amico: 02 2327 2327</strong></div>
+            </div>
+          )}
+
+          <button className="tap" onClick={() => onStartChat(`Ho appena completato il test ${result.testSubtitle} (${result.testName}). Punteggio: ${result.score}/${result.maxScore} — "${result.cat}". Vorrei parlarne con te.`)}
+            style={{ width: '100%', padding: '15px', borderRadius: 16, border: 'none', background: C.accent, color: '#fff', fontSize: 15, fontWeight: 600, marginBottom: 10, cursor: 'pointer' }}>
+            Parla con Liv di questo
+          </button>
+          <button className="tap" onClick={onFinder}
+            style={{ width: '100%', padding: '15px', borderRadius: 16, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+            Trova un professionista
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── DISCLAIMER ── */
+  if (phase === 'disclaimer') {
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+          <button className="tap" onClick={reset} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
+          <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>{test.name}</span>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 24px 40px' }} className="fu">
+          <div style={{ width: 64, height: 64, borderRadius: '50%', background: C.amberDim, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 20 }}>
+            <Ico n="shield" sz={30} c={C.amber}/>
+          </div>
+          <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 22, color: C.text, textAlign: 'center', marginBottom: 14 }}>Prima di iniziare</h2>
+          <p style={{ color: C.muted, fontSize: 14, textAlign: 'center', lineHeight: 1.75, marginBottom: 36, maxWidth: 320 }}>
+            Questo strumento è solo per <strong style={{ color: C.text }}>autovalutazione</strong> e non costituisce diagnosi. I risultati non sostituiscono il parere di un professionista della salute mentale.
+          </p>
+          <button className="tap" onClick={() => setPhase('running')}
+            style={{ width: '100%', maxWidth: 320, padding: '16px', borderRadius: 16, border: 'none', background: C.accent, color: '#fff', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>
+            Ho capito, inizia il test
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── RUNNING ── */
+  if (phase === 'running') {
+    const pct = qIdx / test.questions.length
+    return (
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
+        <div style={{ padding: '12px 16px 0', borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+            <button className="tap" onClick={reset} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
+            <span style={{ color: C.text, fontWeight: 600, fontSize: 15, flex: 1 }}>{test.subtitle}</span>
+            <span style={{ color: C.muted, fontSize: 13, fontWeight: 500 }}>{qIdx + 1} / {test.questions.length}</span>
+          </div>
+          <div style={{ height: 4, background: C.faint, overflow: 'hidden' }}>
+            <div style={{ width: `${pct * 100}%`, height: '100%', background: C.accent, transition: 'width .3s ease' }}/>
+          </div>
+        </div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '32px 20px 24px', overflowY: 'auto' }} className="fu">
+          <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 18 }}>
+            Nelle ultime 2 settimane, quanto spesso hai:
+          </p>
+          <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 21, color: C.text, lineHeight: 1.45, marginBottom: 36, flex: 1 }}>
+            {test.questions[qIdx]}
+          </h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {test.scale.map((label, val) => (
+              <button key={val} className="tap" onClick={() => answer(val)}
+                style={{ padding: '14px 20px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 15, fontWeight: 500, textAlign: 'left', cursor: 'pointer' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  /* ── SELECT ── */
+  return (
+    <div style={{ height: '100%', overflowY: 'auto', padding: '24px 20px 40px' }} className="fu">
+      <h1 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 26, color: C.text, marginBottom: 6 }}>Test</h1>
+      <p style={{ color: C.muted, fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Strumenti di autovalutazione clinicamente validati.</p>
+
+      {[
+        { t: PHQ9, emoji: '🌧️', desc: '9 domande · ~2 min' },
+        { t: GAD7,  emoji: '🌊', desc: '7 domande · ~2 min' },
+      ].map(({ t, emoji, desc }) => (
+        <button key={t.id} className="tap" onClick={() => pick(t)}
+          style={{ width: '100%', padding: '20px', borderRadius: 20, border: `1.5px solid ${C.border}`, background: C.card, textAlign: 'left', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 16, cursor: 'pointer' }}>
+          <div style={{ width: 50, height: 50, borderRadius: 14, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>{emoji}</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ color: C.text, fontWeight: 700, fontSize: 16, marginBottom: 2 }}>{t.name}</div>
+            <div style={{ color: C.accent, fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{t.subtitle}</div>
+            <div style={{ color: C.muted, fontSize: 12 }}>{desc}</div>
+          </div>
+          <span style={{ color: C.muted, fontSize: 20, lineHeight: 1 }}>›</span>
+        </button>
+      ))}
+
+      <div style={{ background: C.faint, borderRadius: 14, padding: '12px 16px', marginTop: 8 }}>
+        <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.7 }}>Questi test sono strumenti di autovalutazione e non costituiscono diagnosi. Parla sempre con un professionista per una valutazione completa.</p>
+      </div>
+    </div>
+  )
+}
+
 /* ─── ASSESSMENT ────────────────────────────────────────────────────────── */
 function Assessment({ onBack, onSaveReport }) {
   const [step, ss] = useState(0)
@@ -2208,13 +2417,13 @@ export default function App() {
   // 3 — App principale (login opzionale)
   const TABS = [
     { id: 'home',    icon: 'home',    label: 'Home' },
-    { id: 'assess',  icon: 'clip',    label: 'Test' },
+    { id: 'tests',   icon: 'clip',    label: 'Test' },
     { id: 'chat',    icon: 'chat',    label: 'Liv' },
     { id: 'checkin', icon: 'pulse',   label: 'Umore' },
     { id: 'finder',  icon: 'search',  label: 'Psicologo' },
   ]
 
-  const isFS = ['chat', 'checkin', 'assess', 'finder', 'diario', 'profile', 'auth', 'mood-gate'].includes(screen)
+  const isFS = ['chat', 'checkin', 'assess', 'tests', 'finder', 'diario', 'profile', 'auth', 'mood-gate'].includes(screen)
 
   return (
     <div className="app-shell">
@@ -2224,6 +2433,10 @@ export default function App() {
         {screen === 'checkin' && <CheckIn onBack={() => setScreen('home')} onDone={handleCIDone}/>}
         {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')} onAutoCI={handleAutoCI}/>}
         {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave}/>}
+        {screen === 'tests'   && <Tests
+          onStartChat={s => { setSeed(s); setScreen('chat') }}
+          onFinder={() => setScreen('finder')}
+          onSaveReport={handleReportSave}/>}
         {screen === 'auth'    && <AuthScreen onBack={() => setScreen('profile')} onDone={() => setScreen('home')}/>}
         {screen === 'profile' && <Profile checkins={checkins} chats={chats} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
         {screen === 'mood-gate' && <MoodGate
