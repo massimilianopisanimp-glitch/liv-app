@@ -977,14 +977,11 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         <button className="tap" onClick={handleBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}>
           <Ico n="back" sz={22} c={C.muted}/>
         </button>
-        <div style={{ width: 38, height: 38, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><img src="/logo.png" alt="Liv" style={{ width: '65%', height: '65%', objectFit: 'contain' }} /></div>
+        <LogoAnimated size={38} thinking={thinking}/>
         <div style={{ flex: 1 }}>
           <div style={{ color: C.text, fontWeight: 400, fontSize: 16, fontFamily: "'DM Serif Display',serif", lineHeight: 1.1 }}>{title || 'Liv'}</div>
           <div style={{ color: C.muted, fontSize: 11, marginTop: 1 }}>{subtitle || 'in ascolto'}</div>
         </div>
-        {thinking && (
-          <img src="/logo.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain', marginRight: 4, animation: 'pulse-logo 1.4s ease-in-out infinite' }} />
-        )}
       </div>
 
       {/* Messaggi */}
