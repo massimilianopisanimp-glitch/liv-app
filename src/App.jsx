@@ -3,7 +3,7 @@ import { supabase } from './lib/supabase'
 
 /* ─── PALETTE ──────────────────────────────────────────────────────────── */
 const C = {
-  bg:       '#F5F5F0',
+  bg:       '#ffffff',
   card:     '#FFFFFF',
   border:   'rgba(0,0,0,.07)',
   text:     '#2D2D2D',
@@ -15,7 +15,7 @@ const C = {
   amber:    '#8B9070', amberDim:  'rgba(139,144,112,.13)',
   rose:     '#906B6B', roseDim:   'rgba(144,107,107,.10)',
   barBg:    '#EDECEA',
-  tabBarBg: '#F5F5F0',
+  tabBarBg: '#ffffff',
 }
 
 /* ─── ACCENT HELPERS ───────────────────────────────────────────────────── */
