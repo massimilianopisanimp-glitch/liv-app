@@ -831,27 +831,35 @@ function ChatView({ onBack, seed, moodSeed, sys, accent, title, subtitle, initMs
   const bot = useRef(null)
   const ta = useRef(null)
   const twQueue = useRef('')
-  const twInterval = useRef(null)
+  const twRaf = useRef(null)
+  const twLastTime = useRef(null)
+  const CHARS_PER_SEC = 30
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior: 'auto' }) }, [msgs, load])
 
   function startTypewriter() {
-    if (twInterval.current) return
-    twInterval.current = setInterval(() => {
-      if (twQueue.current.length === 0) return
-      const char = twQueue.current[0]
-      twQueue.current = twQueue.current.slice(1)
+    if (twRaf.current) return
+    twLastTime.current = null
+    function frame(ts) {
+      if (twQueue.current.length === 0) { twRaf.current = requestAnimationFrame(frame); return }
+      if (twLastTime.current === null) twLastTime.current = ts
+      const elapsed = ts - twLastTime.current
+      twLastTime.current = ts
+      const count = Math.max(1, Math.floor(elapsed * CHARS_PER_SEC / 1000))
+      const chars = twQueue.current.slice(0, count)
+      twQueue.current = twQueue.current.slice(count)
       sm(p => {
         const u = [...p]
-        u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + char }
+        u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chars }
         return u
       })
-    }, 15)
+      twRaf.current = requestAnimationFrame(frame)
+    }
+    twRaf.current = requestAnimationFrame(frame)
   }
 
   function stopTypewriter() {
-    if (twInterval.current) { clearInterval(twInterval.current); twInterval.current = null }
-    // flush any remaining chars immediately
+    if (twRaf.current) { cancelAnimationFrame(twRaf.current); twRaf.current = null }
     if (twQueue.current.length > 0) {
       const remaining = twQueue.current
       twQueue.current = ''
