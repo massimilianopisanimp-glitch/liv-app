@@ -1231,17 +1231,19 @@ function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
             <div style={{ width: `${pct * 100}%`, height: '100%', background: C.accent, transition: 'width .3s ease' }}/>
           </div>
         </div>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '32px 20px 24px', overflowY: 'auto' }} className="fu">
-          <p style={{ color: C.muted, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 18 }}>
-            Nelle ultime 2 settimane, quanto spesso hai:
-          </p>
-          <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 21, color: C.text, lineHeight: 1.45, marginBottom: 36, flex: 1 }}>
-            {test.questions[qIdx]}
-          </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '28px 20px 24px', overflowY: 'auto' }} className="fu">
+          <div>
+            <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 20 }}>
+              Nelle ultime 2 settimane, quanto spesso hai:
+            </p>
+            <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 24, color: C.text, lineHeight: 1.4, marginBottom: 0 }}>
+              {test.questions[qIdx]}
+            </h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {test.scale.map((label, val) => (
               <button key={val} className="tap" onClick={() => answer(val)}
-                style={{ padding: '14px 20px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 15, fontWeight: 500, textAlign: 'left', cursor: 'pointer' }}>
+                style={{ padding: '16px 20px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 15, fontWeight: 500, textAlign: 'left', cursor: 'pointer', transition: 'all .15s' }}>
                 {label}
               </button>
             ))}
@@ -1611,7 +1613,7 @@ function MoodChart({ checkins }) {
 }
 
 /* ─── PROFILE ───────────────────────────────────────────────────────────── */
-function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, onAccentChange, onGoAuth }) {
+function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, accent, onAccentChange, onGoAuth }) {
   const [analysis, setAnalysis] = useState(null)  // { schemi, sintesi, domanda }
   const [analysisLoading, setAnalysisLoading] = useState(false)
   const [analysisErr, setAnalysisErr] = useState(false)
@@ -1751,6 +1753,45 @@ function Profile({ checkins, chats, userName, onBack, user, onLogout, accent, on
           <Card style={{ marginBottom: 24 }}>
             <MoodChart checkins={sorted}/>
           </Card>
+
+          {/* — I MIEI TEST — */}
+          {(() => {
+            const testReports = (reports || [])
+              .filter(r => r.testId || r.type === 'psychometric')
+              .sort((a, b) => new Date(b.date || b.completedAt || 0) - new Date(a.date || a.completedAt || 0))
+            const scoreColor = s => s <= 4 ? C.teal : s <= 9 ? '#b8a07a' : s <= 14 ? '#c07a8a' : C.rose
+            return (
+              <>
+                <div style={{ marginBottom: 8 }}>
+                  <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>I miei test</h3>
+                  <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Storico PHQ-9 e GAD-7</p>
+                </div>
+                <Card style={{ marginBottom: 24 }}>
+                  {testReports.length === 0
+                    ? <p style={{ color: C.muted, fontSize: 14 }}>Nessun test completato ancora.</p>
+                    : testReports.map((r, i) => {
+                        const col = scoreColor(r.score)
+                        const dateStr = r.date ? new Date(r.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
+                        return (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: i < testReports.length - 1 ? 14 : 0, marginBottom: i < testReports.length - 1 ? 14 : 0, borderBottom: i < testReports.length - 1 ? `0.5px solid ${C.border}` : 'none' }}>
+                            <div style={{ width: 44, height: 44, borderRadius: 12, background: col + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1.5px solid ${col}33` }}>
+                              <span style={{ fontSize: 16, fontWeight: 700, color: col, fontFamily: "'DM Serif Display',serif" }}>{r.score}</span>
+                            </div>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                                <span style={{ color: C.accent, fontSize: 12, fontWeight: 700 }}>{r.testSubtitle || r.testId?.toUpperCase()}</span>
+                                <span style={{ color: col, fontSize: 11, fontWeight: 600, background: col + '15', padding: '2px 8px', borderRadius: 20 }}>{r.cat}</span>
+                              </div>
+                              <span style={{ color: C.muted, fontSize: 12 }}>{dateStr}</span>
+                            </div>
+                          </div>
+                        )
+                      })
+                  }
+                </Card>
+              </>
+            )
+          })()}
 
           {/* 2 — AREE PIÙ COINVOLTE */}
           {topAreas.length > 0 && <>
@@ -2269,7 +2310,7 @@ export default function App() {
           onFinder={() => setScreen('finder')}
           onSaveReport={handleReportSave}/>}
         {screen === 'auth'    && <AuthScreen onBack={() => setScreen('profile')} onDone={() => setScreen('home')}/>}
-        {screen === 'profile' && <Profile checkins={checkins} chats={chats} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
+        {screen === 'profile' && <Profile checkins={checkins} chats={chats} reports={reports} userName={userName} onBack={() => setScreen('home')} user={user} onLogout={handleLogout} accent={accent} onAccentChange={setAccent} onGoAuth={() => setScreen('auth')}/>}
         {screen === 'mood-gate' && <MoodGate
           onBack={() => setScreen('home')}
           onContinue={v => { setMoodGateVal(v); setSeed(`Mood iniziale: ${v}/10`); setScreen('chat') }}/>}
