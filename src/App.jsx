@@ -1019,7 +1019,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         {msgs.map((m, i) => (
           <div key={i} className={i === msgs.length - 1 ? 'fu' : ''} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8 }}>
             {m.role === 'assistant' && (
-              <div style={{ width: 26, height: 26, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginBottom: 2 }}><img src="/logo.png" alt="Liv" style={{ width: '65%', height: '65%', objectFit: 'contain' }} /></div>
+              <LogoAnimated size={26} thinking={load && i === msgs.length - 1}/>
             )}
             <div style={{
               maxWidth: '78%',
