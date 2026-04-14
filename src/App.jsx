@@ -228,14 +228,7 @@ async function streamAI(msgs, sys, onChunk) {
 /* ─── LOGO ─────────────────────────────────────────────────────────────── */
 function Logo({ size = 28 }) {
   return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: C.accent,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      flexShrink: 0, userSelect: 'none',
-    }}>
-      <img src="/logo.png" alt="Liv" style={{ width: '65%', height: '65%', objectFit: 'contain' }} />
-    </div>
+    <img src="/logo.png" alt="Liv" style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0, userSelect: 'none' }} />
   )
 }
 
