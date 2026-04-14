@@ -1958,13 +1958,16 @@ export default function App() {
     if (ciRes.error) console.error('[Supabase] errore checkins:', ciRes.error.message)
     if (chRes.error) console.error('[Supabase] errore chats:', chRes.error.message)
     if (rRes.error)  console.error('[Supabase] errore reports:', rRes.error.message)
-    if (!profRes.error) {
-      if (profRes.data?.data) {
-        setUserProfile(profRes.data.data)
-        setOnb(true)   // profilo in Supabase = onboarding già fatto
-      } else {
-        setOnb(false)  // nessun profilo = mostra onboarding
-      }
+    if (profRes.error) {
+      // Query failed — keep whatever is already in localStorage (onb unchanged)
+      console.error('[Supabase] errore profilo:', profRes.error.message)
+    } else if (profRes.data?.data) {
+      setUserProfile(profRes.data.data)
+      setOnb(true)   // profilo in Supabase = onboarding già fatto
+    } else {
+      // No profile row yet — only reset onboarding if localStorage also says false
+      const stored = localStorage.getItem('liv_onb_v1')
+      if (!stored || stored === 'false') setOnb(false)
     }
 
     // Migrazione localStorage → Supabase
