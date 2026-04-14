@@ -370,7 +370,7 @@ function Onboarding({ done }) {
     { id: 'crescita', emoji: '🌱', label: 'Crescita personale',   desc: 'Capire me stesso meglio' },
   ]
   const slides = [
-    { title: 'Ciao, sono Liv.', body: 'Il tuo spazio privato per capire cosa ti succede dentro.\nTraccia emozioni, schemi e pensieri — senza giudicarti, mai.', icon: <Logo size={80}/> },
+    { title: 'Ciao, sono Liv.', body: 'Il tuo spazio privato per capire cosa ti succede dentro.\nTraccia emozioni, schemi e pensieri — senza giudicarti, mai.', icon: <Logo size={120}/> },
     { title: 'Come funziona', body: 'Ogni giorno o quando preferisci fai un check-in veloce.\nParla con Liv quando ne hai bisogno.\nUna volta al mese, fai il check-up completo per vedere come stai davvero.', icon: <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.tealDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico n="pulse" sz={36} c={C.teal}/></div> },
     { title: 'Non è terapia.', body: 'Liv non sostituisce uno psicologo.\nSe stai attraversando un momento difficile, siamo qui per aiutarti a trovare il giusto tipo di percorso psicologico.', icon: <div style={{ width: 72, height: 72, borderRadius: '50%', background: C.roseDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Ico n="shield" sz={36} c={C.rose}/></div> },
     { isLegal: true },
