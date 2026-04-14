@@ -239,7 +239,7 @@ function LogoAnimated({ size = 36, thinking = false }) {
   return (
     <img src="/logo.png" alt="Liv"
       style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0,
-        animation: thinking ? 'pulse-logo 1.4s ease-in-out infinite' : 'none' }} />
+        animation: thinking ? 'pulse-logo 2s linear infinite' : 'none' }} />
   )
 }
 
