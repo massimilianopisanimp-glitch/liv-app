@@ -533,7 +533,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
         <div>
           <p style={{ color: C.muted, fontSize: 12, fontWeight: 500, marginBottom: 3 }}>{gr}</p>
           <h1 style={{ color: C.text, fontSize: 28, fontWeight: 400, fontFamily: "'DM Serif Display',serif", lineHeight: 1.1 }}>
-            {userName ? `Come stai, ${userName}?` : 'Come stai oggi?'}
+            {userName ? `Come stai ${userName}?` : 'Come stai oggi?'}
           </h1>
         </div>
         <button className="tap" onClick={() => onNav('profile')}
@@ -564,7 +564,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
       </button>
 
       {/* CTA principale: check-in */}
-      <button className="tap" onClick={() => onNav('checkin')} style={{ width: '100%', padding: '16px 20px', borderRadius: 22, border: 'none', background: C.accent, marginBottom: 10, textAlign: 'left', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+      <button className="tap" onClick={() => onNav('checkin')} style={{ width: '100%', padding: '16px 20px', borderRadius: 22, border: `1.5px solid ${C.accent}`, background: C.accent, marginBottom: 10, textAlign: 'left', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
         <div style={{ position: 'absolute', right: -10, top: -10, width: 100, height: 100, borderRadius: '50%', background: 'rgba(0,0,0,.03)' }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ width: 42, height: 42, borderRadius: 14, background: 'rgba(255,255,255,.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -591,7 +591,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
           { id: 'finder',  icon: 'search',  title: 'Trova il percorso', sub: 'Supporto professionale' },
         ].map(item => (
           <button key={item.id} className="tap home-card" onClick={() => onNav(item.id)}
-            style={{ width: '100%', padding: 'clamp(12px,2vw,20px)', borderRadius: 20, border: `0.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            style={{ width: '100%', padding: 'clamp(12px,2vw,20px)', borderRadius: 20, border: `1.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ico n={item.icon} sz={18} c={C.accent}/>
             </div>
