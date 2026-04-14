@@ -31,6 +31,8 @@ function applyAccent(hex) {
   C.teal   = hex; C.tealDim   = `rgba(${rgb},.10)`
   document.documentElement.style.setProperty('--c-accent', hex)
   document.documentElement.style.setProperty('--c-accent-dim', `rgba(${rgb},.10)`)
+  document.documentElement.style.setProperty('--accent', hex)
+  document.documentElement.style.setProperty('--accent-rgb', rgb)
 }
 
 /* ─── COSTANTI ─────────────────────────────────────────────────────────── */
@@ -789,7 +791,7 @@ function MoodFace({ val }) {
 function MoodGate({ onBack, onContinue }) {
   const [val, setVal] = useState(6)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, '--accent': C.accent, '--accent-rgb': C.accentRgb }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg }}>
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: `0.5px solid ${C.border}`, background: C.card }}>
         <button className="tap" onClick={onBack} style={{ border: 'none', background: 'none', padding: 6, marginRight: 8, borderRadius: 10 }}>
