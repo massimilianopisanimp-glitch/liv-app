@@ -235,15 +235,11 @@ function Logo({ size = 28 }) {
 }
 
 function LogoAnimated({ size = 36, thinking = false }) {
-  const d = Math.max(6, Math.round(size * 0.17))
-  if (thinking) {
-    return (
-      <div style={{ width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, flexShrink: 0 }}>
-        {[0, 1, 2].map(i => <div key={i} className={`b${i}`} style={{ width: d, height: d, borderRadius: '50%', background: C.accent }} />)}
-      </div>
-    )
-  }
-  return <Logo size={size} />
+  return (
+    <img src="/logo.png" alt="Liv"
+      style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0,
+        animation: thinking ? 'pulse-logo 1.4s ease-in-out infinite' : 'none' }} />
+  )
 }
 
 /* ─── MOOD BULB ────────────────────────────────────────────────────────── */
@@ -833,28 +829,17 @@ function ChatView({ onBack, seed, moodSeed, sys, accent, title, subtitle, initMs
   const [toast, setToast] = useState(false)
   const bot = useRef(null)
   const ta = useRef(null)
-  const streamBuf = useRef('')
-  const rafId = useRef(null)
+
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior: 'auto' }) }, [msgs, load])
 
   function makeChunkHandler() {
-    streamBuf.current = ''
-    if (rafId.current) { cancelAnimationFrame(rafId.current); rafId.current = null }
     return function onChunk(chunk) {
-      streamBuf.current += chunk
-      if (!rafId.current) {
-        rafId.current = requestAnimationFrame(() => {
-          rafId.current = null
-          const text = streamBuf.current
-          streamBuf.current = ''
-          sm(p => {
-            const u = [...p]
-            u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + text }
-            return u
-          })
-        })
-      }
+      sm(p => {
+        const u = [...p]
+        u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chunk }
+        return u
+      })
     }
   }
   useEffect(() => {
@@ -997,9 +982,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
           <div style={{ color: C.muted, fontSize: 11, marginTop: 1 }}>{subtitle || 'in ascolto'}</div>
         </div>
         {thinking && (
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginRight: 4 }}>
-            {[0,1,2].map(i => <div key={i} className={`b${i}`} style={{ width: 5, height: 5, borderRadius: '50%', background: C.accent }}/>)}
-          </div>
+          <img src="/logo.png" alt="" style={{ width: 22, height: 22, objectFit: 'contain', marginRight: 4, animation: 'pulse-logo 1.4s ease-in-out infinite' }} />
         )}
       </div>
 
