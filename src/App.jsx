@@ -789,7 +789,7 @@ function MoodFace({ val }) {
 function MoodGate({ onBack, onContinue }) {
   const [val, setVal] = useState(6)
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg }}>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg, '--accent': C.accent, '--accent-rgb': C.accentRgb }}>
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: `0.5px solid ${C.border}`, background: C.card }}>
         <button className="tap" onClick={onBack} style={{ border: 'none', background: 'none', padding: 6, marginRight: 8, borderRadius: 10 }}>
