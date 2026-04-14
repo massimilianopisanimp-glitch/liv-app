@@ -1120,7 +1120,7 @@ const GAD7 = {
     : { cat: 'Ansia grave', desc: 'Stai vivendo un livello elevato di ansia. Cercare supporto professionale può aiutarti molto.' },
 }
 
-function Tests({ onStartChat, onFinder, onSaveReport }) {
+function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
   const [phase, setPhase] = useState('select') // select | disclaimer | running | result
   const [test, setTest] = useState(null)
   const [answers, setAnswers] = useState([])
@@ -1253,7 +1253,14 @@ function Tests({ onStartChat, onFinder, onSaveReport }) {
 
   /* ── SELECT ── */
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: '24px 20px 40px' }} className="fu">
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
+      {onBack && (
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0 }}>
+          <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
+          <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Test</span>
+        </div>
+      )}
+    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px 40px' }} className="fu">
       <h1 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 26, color: C.text, marginBottom: 6 }}>Test</h1>
       <p style={{ color: C.muted, fontSize: 14, marginBottom: 24, lineHeight: 1.6 }}>Strumenti di autovalutazione clinicamente validati.</p>
 
@@ -1277,189 +1284,13 @@ function Tests({ onStartChat, onFinder, onSaveReport }) {
         <p style={{ color: C.muted, fontSize: 12, lineHeight: 1.7 }}>Questi test sono strumenti di autovalutazione e non costituiscono diagnosi. Parla sempre con un professionista per una valutazione completa.</p>
       </div>
     </div>
+    </div>
   )
 }
 
 /* ─── ASSESSMENT ────────────────────────────────────────────────────────── */
-function Assessment({ onBack, onSaveReport }) {
-  const [step, ss] = useState(0)
-  const [ans, sa] = useState({})
-  const [life, sl] = useState({})
-  const [rep, sr] = useState('')
-  const [loadRep, slr] = useState(false)
-  const [saved, setSaved] = useState(false)
-
-  const ok = () => {
-    if (step < 5) return A_SECS[step].q.every((_, i) => ans[`${step}_${i}`] !== undefined)
-    if (step === 5) return A_LIFE.every((_, i) => life[i] !== undefined)
-    return true
-  }
-
-  async function genRep(scores, lifeRes) {
-    slr(true)
-    const sum = scores.map(s => `${s.t}: ${Math.round(s.pct)}%`).join(', ')
-    const ls = lifeRes.map(l => `${l.a}: ${l.v > 0 ? '+' + l.v : l.v}`).join(', ')
-    try {
-      const r = await callAI([{ role: 'user', content: `Report mensile:\nDistress: ${sum}\nVita: ${ls}` }], SYS_REPORT)
-      sr(r)
-      if (onSaveReport) {
-        onSaveReport({ scores, lifeResults: lifeRes, aiReflection: r, totalPct: (scores.reduce((a, s) => a + s.score, 0) / scores.reduce((a, s) => a + s.max, 0)) * 100 })
-        setSaved(true)
-      }
-    } catch { sr('Non è stato possibile generare il report AI.') }
-    slr(false)
-  }
-
-  function next() {
-    if (!ok()) return
-    if (step === 5) {
-      const scores = A_SECS.map((s, si) => { let sc = 0; s.q.forEach((_, qi) => sc += (ans[`${si}_${qi}`] || 0)); return { t: s.t, score: sc, max: s.max, pct: (sc / s.max) * 100 } })
-      genRep(scores, A_LIFE.map((a, i) => ({ a, v: life[i] })))
-    }
-    ss(s => s + 1)
-  }
-
-  if (step === 6) {
-    const scores = A_SECS.map((s, si) => { let sc = 0; s.q.forEach((_, qi) => sc += (ans[`${si}_${qi}`] || 0)); return { t: s.t, score: sc, max: s.max, pct: (sc / s.max) * 100 } })
-    const tot = scores.reduce((a, s) => a + s.score, 0)
-    const maxT = scores.reduce((a, s) => a + s.max, 0)
-    const pct = (tot / maxT) * 100
-    const lv = pct > 66 ? 'Elevato' : pct > 33 ? 'Moderato' : 'Basso'
-    const lc = lv === 'Basso' ? C.teal : C.amber
-    const top2 = [...scores].sort((a, b) => b.pct - a.pct).slice(0, 2)
-    const negL = A_LIFE.map((a, i) => ({ a, v: life[i] })).filter(l => l.v < 0).sort((a, b) => a.v - b.v).slice(0, 2)
-    const posL = A_LIFE.map((a, i) => ({ a, v: life[i] })).filter(l => l.v > 0).sort((a, b) => b.v - a.v).slice(0, 2)
-
-    return (
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-          <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}><Ico n="back" sz={22} c={C.muted}/></button>
-          <span style={{ color: C.teal, fontSize: 13, fontWeight: 600, letterSpacing: .5 }}>✓ Report mensile completato</span>
-        </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px,4vw,40px) clamp(16px,5vw,48px)' }} className="fu">
-          <h2 style={{ color: C.text, fontSize: 24, fontWeight: 700, fontFamily: "'DM Serif Display',serif", marginBottom: 4 }}>Il tuo report</h2>
-          <p style={{ color: C.muted, fontSize: 13, marginBottom: 24 }}>{new Date().toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })}</p>
-
-          <Card style={{ marginBottom: 14 }}>
-            <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 8 }}>Stato di benessere</p>
-            <div style={{ fontSize: 30, fontWeight: 700, color: lc, marginBottom: 10 }}>{lv}</div>
-            <div style={{ height: 6, borderRadius: 3, background: C.faint, overflow: 'hidden' }}>
-              <div style={{ width: `${pct}%`, height: '100%', borderRadius: 3, background: lc, transition: 'width .8s ease' }}/>
-            </div>
-          </Card>
-
-          <Card style={{ marginBottom: 14 }}>
-            <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 14 }}>Aree con più impatto</p>
-            {top2.map((s, i) => (
-              <div key={i} style={{ marginBottom: 14 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ color: C.text, fontSize: 14, fontWeight: 600 }}>{s.t}</span>
-                  <span style={{ color: C.rose, fontSize: 13, fontWeight: 700 }}>{Math.round(s.pct)}%</span>
-                </div>
-                <div style={{ height: 6, borderRadius: 3, background: C.faint, overflow: 'hidden' }}>
-                  <div style={{ width: `${s.pct}%`, height: '100%', borderRadius: 3, background: C.rose + 'bb' }}/>
-                </div>
-              </div>
-            ))}
-          </Card>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-            <div style={{ background: C.roseDim, borderRadius: 20, padding: '16px', border: `1px solid ${C.rose}22` }}>
-              <p style={{ color: C.rose, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 12 }}>Da osservare</p>
-              {negL.length > 0 ? negL.map((l, i) => <div key={i} style={{ color: C.text, fontSize: 13, fontWeight: 600, marginBottom: 6, lineHeight: 1.35 }}>{l.a}</div>)
-                : <div style={{ color: C.muted, fontSize: 13 }}>—</div>}
-            </div>
-            <div style={{ background: C.tealDim, borderRadius: 20, padding: '16px', border: `1px solid ${C.teal}22` }}>
-              <p style={{ color: C.teal, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 12 }}>Punti di forza</p>
-              {posL.length > 0 ? posL.map((l, i) => <div key={i} style={{ color: C.text, fontSize: 13, fontWeight: 600, marginBottom: 6, lineHeight: 1.35 }}>{l.a}</div>)
-                : <div style={{ color: C.muted, fontSize: 13 }}>—</div>}
-            </div>
-          </div>
-
-          <Card style={{ background: `linear-gradient(135deg,${C.purpleDim},${C.tealDim})`, border: `1px solid ${C.accent}20`, marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-              <Logo size={20}/>
-              <span style={{ color: C.purple, fontWeight: 600, fontSize: 14 }}>Riflessione Liv</span>
-            </div>
-            {loadRep
-              ? <div style={{ display: 'flex', gap: 8, padding: '6px 0' }}>{[0, 1, 2].map(i => <div key={i} className={`b${i}`} style={{ width: 7, height: 7, borderRadius: '50%', background: C.purple }}/>)}</div>
-              : <p style={{ color: 'rgba(0,0,0,.7)', fontSize: 14, lineHeight: 1.78 }}>{rep}</p>}
-          </Card>
-          <Btn variant="ghost" onClick={onBack}>Torna alla home</Btn>
-        </div>
-      </div>
-    )
-  }
-
-  const sec = step < 5 ? A_SECS[step] : null
-
-  return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
-        <button className="tap" onClick={step === 0 ? onBack : () => ss(step - 1)} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}><Ico n="back" sz={22} c={C.muted}/></button>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', gap: 3 }}>
-            {[0, 1, 2, 3, 4, 5].map(i => <div key={i} style={{ flex: 1, height: 4, borderRadius: 2, background: i < step ? C.teal : i === step ? C.amber : C.faint, transition: 'all .3s' }} />)}
-          </div>
-          <p style={{ color: C.muted, fontSize: 11, marginTop: 5, fontWeight: 500 }}>Check-up mensile · sezione {step + 1}/6</p>
-        </div>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(16px,4vw,40px) clamp(16px,5vw,48px) 100px' }} className="si" key={step}>
-        {step < 5 && sec && (
-          <div>
-            <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", marginBottom: 4 }}>{sec.t}</h2>
-            <p style={{ color: C.muted, fontSize: 13, marginBottom: 24 }}>Ultime 2 settimane</p>
-            {sec.q.map((q, i) => (
-              <Card key={i} style={{ marginBottom: 12 }}>
-                <p style={{ color: 'rgba(0,0,0,.75)', fontSize: 14, fontWeight: 500, marginBottom: 14, lineHeight: 1.65 }}>{q}</p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
-                  {['Mai', 'Raram.', 'Spesso', 'Sempre'].map((lbl, val) => (
-                    <button key={val} className="tap" onClick={() => sa({ ...ans, [`${step}_${i}`]: val })}
-                      style={{ padding: '10px 4px', borderRadius: 12, border: `2px solid ${ans[`${step}_${i}`] === val ? C.amber : C.border}`, background: ans[`${step}_${i}`] === val ? C.amberDim : C.card, color: ans[`${step}_${i}`] === val ? C.amber : 'rgba(0,0,0,.35)', fontSize: 11, fontWeight: 600, transition: 'all .2s' }}>
-                      {lbl}
-                    </button>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-        {step === 5 && (
-          <div>
-            <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", marginBottom: 4 }}>Ambiti di vita</h2>
-            <p style={{ color: C.muted, fontSize: 13, marginBottom: 24 }}>Come incidono sul tuo benessere adesso?</p>
-            {A_LIFE.map((area, i) => (
-              <Card key={i} style={{ marginBottom: 12 }}>
-                <p style={{ color: 'rgba(0,0,0,.75)', fontSize: 14, fontWeight: 600, marginBottom: 14 }}>{area}</p>
-                <div style={{ display: 'flex', gap: 6 }}>
-                  {[-2, -1, 0, 1, 2].map(val => {
-                    const ac = val < 0 ? C.rose : val > 0 ? C.teal : 'rgba(100,116,139,1)'
-                    const lbs = { '-2': '--', '-1': '-', '0': '=', '1': '+', '2': '++' }
-                    return (
-                      <button key={val} className="tap" onClick={() => sl({ ...life, [i]: val })}
-                        style={{ flex: 1, height: 44, borderRadius: 12, border: `2px solid ${life[i] === val ? ac : C.border}`, background: life[i] === val ? `${ac}22` : C.card, color: life[i] === val ? ac : 'rgba(0,0,0,.28)', fontSize: 18, fontWeight: 700, transition: 'all .2s' }}>
-                        {lbs[val]}
-                      </button>
-                    )
-                  })}
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'rgba(0,0,0,.18)', fontSize: 10, marginTop: 8, fontWeight: 500 }}>
-                  <span>Negativo</span><span>Neutro</span><span>Positivo</span>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 20px 28px', background: `linear-gradient(to top,${C.bg} 65%,transparent)`, zIndex: 10 }}>
-        <Btn variant={ok() ? 'amber' : 'ghost'} onClick={next} disabled={!ok()}>
-          {step === 5 ? 'Genera il mio report →' : 'Continua →'}
-        </Btn>
-      </div>
-    </div>
-  )
+function Assessment({ onBack, onSaveReport, onStartChat, onFinder }) {
+  return <Tests onBack={onBack} onStartChat={onStartChat} onFinder={onFinder} onSaveReport={onSaveReport} />
 }
 
 /* ─── DIARIO ────────────────────────────────────────────────────────────── */
@@ -2432,7 +2263,7 @@ export default function App() {
         {screen === 'home'    && <Home checkins={checkins} chats={chats} userName={userName} user={user} onNav={s => { setSeed(null); setScreen(s === 'chat' ? 'mood-gate' : s) }}/>}
         {screen === 'checkin' && <CheckIn onBack={() => setScreen('home')} onDone={handleCIDone}/>}
         {screen === 'diario'  && <Diario checkins={checkins} chats={chats} onBack={() => setScreen('home')} onAutoCI={handleAutoCI}/>}
-        {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave}/>}
+        {screen === 'assess'  && <Assessment onBack={() => setScreen('home')} onSaveReport={handleReportSave} onStartChat={s => { setSeed(s); setScreen('chat') }} onFinder={() => setScreen('finder')}/>}
         {screen === 'tests'   && <Tests
           onStartChat={s => { setSeed(s); setScreen('chat') }}
           onFinder={() => setScreen('finder')}
