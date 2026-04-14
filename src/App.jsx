@@ -586,7 +586,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
       }}>
         {[
           { id: 'chat',    icon: 'chat',    title: 'Parliamo',          sub: 'Rifletti con Liv' },
-          { id: 'assess',  icon: 'clip',    title: 'Test di autovalutazione', sub: 'Auto-analisi mensile' },
+          { id: 'assess',  icon: 'clip',    title: 'Test di autovalutazione', sub: 'Auto-analisi' },
           { id: 'profile', icon: 'chart',   title: 'Il mio profilo',    sub: 'Trend e insight' },
           { id: 'finder',  icon: 'search',  title: 'Trova il percorso', sub: 'Supporto professionale' },
         ].map(item => (
