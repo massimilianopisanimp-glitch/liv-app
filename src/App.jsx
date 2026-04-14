@@ -830,17 +830,44 @@ function ChatView({ onBack, seed, moodSeed, sys, accent, title, subtitle, initMs
   const [toast, setToast] = useState(false)
   const bot = useRef(null)
   const ta = useRef(null)
-
+  const twQueue = useRef('')
+  const twInterval = useRef(null)
 
   useEffect(() => { bot.current?.scrollIntoView({ behavior: 'auto' }) }, [msgs, load])
 
-  function makeChunkHandler() {
-    return function onChunk(chunk) {
+  function startTypewriter() {
+    if (twInterval.current) return
+    twInterval.current = setInterval(() => {
+      if (twQueue.current.length === 0) return
+      const char = twQueue.current[0]
+      twQueue.current = twQueue.current.slice(1)
       sm(p => {
         const u = [...p]
-        u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + chunk }
+        u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + char }
         return u
       })
+    }, 15)
+  }
+
+  function stopTypewriter() {
+    if (twInterval.current) { clearInterval(twInterval.current); twInterval.current = null }
+    // flush any remaining chars immediately
+    if (twQueue.current.length > 0) {
+      const remaining = twQueue.current
+      twQueue.current = ''
+      sm(p => {
+        const u = [...p]
+        u[u.length - 1] = { role: 'assistant', content: u[u.length - 1].content + remaining }
+        return u
+      })
+    }
+  }
+
+  function makeChunkHandler() {
+    twQueue.current = ''
+    startTypewriter()
+    return function onChunk(chunk) {
+      twQueue.current += chunk
     }
   }
   useEffect(() => {
@@ -862,9 +889,10 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       setThinking(false)
       streamAI([{ role: 'user', content: '[avvia]' }], contextSys, makeChunkHandler())
         .catch(() => {
+          stopTypewriter()
           sm([{ role: 'assistant', content: firstMsg }])
         })
-        .finally(() => { sl(false) })
+        .finally(() => { stopTypewriter(); sl(false) })
     }
   }, [])
 
@@ -883,8 +911,10 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
         sm(p => [...p, { role: 'assistant', content: '' }])
         setThinking(false)
         await streamAI(next, sys || SYS_CHAT, makeChunkHandler())
+        stopTypewriter()
       }
     } catch {
+      stopTypewriter()
       sm(p => {
         const u = [...p]
         const last = u[u.length - 1]
