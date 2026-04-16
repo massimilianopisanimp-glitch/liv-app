@@ -4,6 +4,6 @@
   "framework": "vite",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/((?!api/|manifest\\.json|sw\\.js|logo\\.png|icon-192\\.png|icon-512\\.png|assets/).*)", "destination": "/index.html" }
   ]
 }
