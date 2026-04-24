@@ -591,7 +591,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
           { id: 'finder',  icon: 'search',  title: 'Trova il percorso', sub: 'Supporto professionale' },
         ].map(item => (
           <button key={item.id} className="tap home-card" onClick={() => onNav(item.id)}
-            style={{ width: '100%', padding: 'clamp(12px,2vw,20px)', borderRadius: 20, border: `1.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            style={{ width: '100%', padding: 'clamp(16px,3vw,24px)', borderRadius: 20, border: `1.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 160 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ico n={item.icon} sz={18} c={C.accent}/>
             </div>
@@ -610,13 +610,14 @@ function Home({ checkins, chats, onNav, userName, user }) {
 /* ─── CHECK-IN ──────────────────────────────────────────────────────────── */
 function EmoPicker({ title, sub, sel, intens, color, onSel, onInt, onNext, canSkip, excl, customEmo, onCustomEmo }) {
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+      <div style={{ flex: 1 }}>
       <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center', marginBottom: sub ? 4 : 20 }}>{title}</h2>
       {sub && <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', marginBottom: 20 }}>{sub}</p>}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
         {EMOTIONS.filter(e => e === 'Altro' || e !== excl).map(e => (
           <button key={e} className="tap" onClick={() => onSel(e)}
-            style={{ padding: '11px 8px', borderRadius: 100, border: `1.5px solid ${sel === e ? color : C.border}`, background: sel === e ? `${color}18` : C.card, color: sel === e ? color : 'rgba(45,45,45,.5)', fontSize: 13, fontWeight: 600, transition: 'all .18s', textAlign: 'center' }}>
+            style={{ padding: '14px 20px', borderRadius: 100, border: `1.5px solid ${sel === e ? color : C.border}`, background: sel === e ? `${color}18` : C.card, color: sel === e ? color : 'rgba(45,45,45,.5)', fontSize: 15, fontWeight: 600, transition: 'all .18s', textAlign: 'center' }}>
             {e}
           </button>
         ))}
@@ -649,10 +650,13 @@ function EmoPicker({ title, sub, sel, intens, color, onSel, onInt, onNext, canSk
           </div>
         </Card>
       )}
-      <Btn variant={canSkip && !sel ? 'ghost' : 'amber'} onClick={onNext}
-        disabled={!canSkip && !sel || (sel === 'Altro' && !customEmo?.trim())}>
-        {canSkip && !sel ? 'Salta questo passaggio' : 'Continua →'}
-      </Btn>
+      </div>
+      <div style={{ position: 'fixed', bottom: 80, left: 0, right: 0, padding: '0 20px 8px', background: C.bg }}>
+        <Btn variant={canSkip && !sel ? 'ghost' : 'amber'} onClick={onNext}
+          disabled={!canSkip && !sel || (sel === 'Altro' && !customEmo?.trim())}>
+          {canSkip && !sel ? 'Salta questo passaggio' : 'Continua →'}
+        </Btn>
+      </div>
     </div>
   )
 }
@@ -683,17 +687,19 @@ function CheckIn({ onBack, onDone }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(20px,4vw,40px) clamp(16px,5vw,48px)' }} className="si" key={step}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(20px,4vw,40px) clamp(16px,5vw,48px) 110px' }} className="si" key={step}>
         {step === 1 && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
-            <h2 style={{ color: C.text, fontSize: 24, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center' }}>Com'è il tuo umore ora?</h2>
-            <MoodBulb mood={d.mood}/>
-            <div style={{ width: '100%' }}>
-              <input type="range" min="0" max="10" value={d.mood} onChange={e => sd({ ...d, mood: parseInt(e.target.value) })}/>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
-                <span style={{ color: C.muted, fontSize: 12 }}>0</span>
-                <span style={{ color: C.amber, fontSize: 28, fontWeight: 700 }}>{d.mood}<span style={{ fontSize: 14, color: C.muted }}>/10</span></span>
-                <span style={{ color: C.muted, fontSize: 12 }}>10</span>
+          <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+              <h2 style={{ color: C.text, fontSize: 24, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center' }}>Com'è il tuo umore ora?</h2>
+              <MoodBulb mood={d.mood}/>
+              <div style={{ width: '100%' }}>
+                <input type="range" min="0" max="10" value={d.mood} onChange={e => sd({ ...d, mood: parseInt(e.target.value) })}/>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 }}>
+                  <span style={{ color: C.muted, fontSize: 12 }}>0</span>
+                  <span style={{ color: C.amber, fontSize: 28, fontWeight: 700 }}>{d.mood}<span style={{ fontSize: 14, color: C.muted }}>/10</span></span>
+                  <span style={{ color: C.muted, fontSize: 12 }}>10</span>
+                </div>
               </div>
             </div>
             <Btn variant="amber" onClick={() => ss(2)}>Continua →</Btn>
@@ -706,27 +712,29 @@ function CheckIn({ onBack, onDone }) {
           onSel={e => sd({ ...d, secEmotion: d.secEmotion === e ? null : e, customSecEmotion: '' })} onInt={v => sd({ ...d, secInt: v })}
           customEmo={d.customSecEmotion} onCustomEmo={v => sd({ ...d, customSecEmotion: v })} onNext={() => ss(4)} canSkip={true} excl={d.emotion}/>}
         {step === 4 && (
-          <div>
-            <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center', marginBottom: 8 }}>Qual è l'area che pesa di più?</h2>
-            <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', marginBottom: 24 }}>Quella che sta influenzando di più il tuo stato</p>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-              {AREAS.map(a => (
-                <button key={a.id} className="tap" onClick={() => sd({ ...d, area: a.l, customArea: a.id === 'altro' ? (d.customArea || '') : '' })}
-                  style={{ padding: '10px 18px', borderRadius: 100, border: `1.5px solid ${d.area === a.l ? C.teal : C.border}`, background: d.area === a.l ? C.tealDim : C.card, display: 'flex', alignItems: 'center', gap: 6, transition: 'all .18s' }}>
-                  <span style={{ fontSize: 15 }}>{a.e}</span>
-                  <span style={{ color: d.area === a.l ? C.teal : 'rgba(45,45,45,.5)', fontSize: 13, fontWeight: 600 }}>{a.l}</span>
-                </button>
-              ))}
+          <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
+            <div style={{ flex: 1 }}>
+              <h2 style={{ color: C.text, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textAlign: 'center', marginBottom: 8 }}>Qual è l'area che pesa di più?</h2>
+              <p style={{ color: C.muted, fontSize: 13, textAlign: 'center', marginBottom: 24 }}>Quella che sta influenzando di più il tuo stato</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+                {AREAS.map(a => (
+                  <button key={a.id} className="tap" onClick={() => sd({ ...d, area: a.l, customArea: a.id === 'altro' ? (d.customArea || '') : '' })}
+                    style={{ padding: '14px 20px', borderRadius: 100, border: `1.5px solid ${d.area === a.l ? C.teal : C.border}`, background: d.area === a.l ? C.tealDim : C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .18s' }}>
+                    <span style={{ fontSize: 16 }}>{a.e}</span>
+                    <span style={{ color: d.area === a.l ? C.teal : 'rgba(45,45,45,.5)', fontSize: 15, fontWeight: 600 }}>{a.l}</span>
+                  </button>
+                ))}
+              </div>
+              {d.area === 'Altro' && (
+                <input autoFocus placeholder="Specifica l'area..." value={d.customArea || ''} onChange={e => sd({ ...d, customArea: e.target.value })}
+                  style={{ width: '100%', padding: '14px 18px', borderRadius: 14, border: `1.5px solid ${d.customArea ? C.teal : C.border}`, background: C.card, color: C.text, fontSize: 15, outline: 'none', marginBottom: 16, transition: 'border-color .2s' }}/>
+              )}
             </div>
-            {d.area === 'Altro' && (
-              <input autoFocus placeholder="Specifica l'area..." value={d.customArea || ''} onChange={e => sd({ ...d, customArea: e.target.value })}
-                style={{ width: '100%', padding: '14px 18px', borderRadius: 14, border: `1.5px solid ${d.customArea ? C.teal : C.border}`, background: C.card, color: C.text, fontSize: 15, outline: 'none', marginBottom: 16, transition: 'border-color .2s' }}/>
-            )}
-            {d.area && (d.area !== 'Altro' || d.customArea?.trim()) && (
-              <Btn variant="grad" onClick={submit} disabled={saving}>
+            <div style={{ position: 'fixed', bottom: 80, left: 0, right: 0, padding: '0 20px 8px', background: C.bg }}>
+              <Btn variant="grad" onClick={submit} disabled={saving || !d.area || (d.area === 'Altro' && !d.customArea?.trim())}>
                 {saving ? 'Un momento...' : 'Parliamo con Liv →'}
               </Btn>
-            )}
+            </div>
           </div>
         )}
       </div>
