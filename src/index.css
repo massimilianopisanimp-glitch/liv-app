@@ -32,12 +32,9 @@ textarea,input,button,select{font-family:'DM Sans',system-ui,sans-serif}
 .tap:active{transform:scale(.95);opacity:.75}
 
 /* ─── Home grid cards ───────────────────────────────────────────── */
-.home-card { height: 140px; }
-@media (max-width: 480px) {
-  .home-card { height: auto; aspect-ratio: 1; }
-}
+.home-card { height: 100%; min-height: 150px; }
 
 /* ─── Range slider ───────────────────────────────────────────────── */
 input[type=range]{-webkit-appearance:none;width:100%;background:transparent}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:26px;width:26px;border-radius:50%;background:var(--accent,#6B9080);border:3px solid #fff;cursor:pointer;margin-top:-11px;box-shadow:0 0 10px rgba(var(--accent-rgb,107,144,128),.3)}
-input[type=range]::-webkit-slider-runnable-track{width:100%;height:4px;background:rgba(0,0,0,.08);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;height:28px;width:28px;border-radius:50%;background:var(--accent,#6B9080);border:3px solid #fff;cursor:pointer;margin-top:-12px;box-shadow:0 0 10px rgba(var(--accent-rgb,107,144,128),.3)}
+input[type=range]::-webkit-slider-runnable-track{width:100%;height:6px;background:rgba(0,0,0,.08);border-radius:3px}

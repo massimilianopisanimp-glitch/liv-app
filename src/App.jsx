@@ -6,7 +6,7 @@ import { supabase } from './lib/supabase'
 const C = {
   bg:       '#ffffff',
   card:     '#FFFFFF',
-  border:   'rgba(0,0,0,.07)',
+  border:   'rgba(0,0,0,.08)',
   text:     '#2D2D2D',
   muted:    'rgba(45,45,45,.45)',
   faint:    'rgba(45,45,45,.06)',
@@ -526,7 +526,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
   const padH = 'clamp(14px,4vw,40px)'
 
   return (
-    <div style={{ height: '100%', overflowY: 'auto', padding: `${pad} ${padH} 0` }} className="fu">
+    <div style={{ height: '100%', overflowY: 'auto', padding: `${pad} ${padH} 0`, display: 'flex', flexDirection: 'column' }} className="fu">
 
       {/* header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10, flexShrink: 0 }}>
@@ -543,14 +543,14 @@ function Home({ checkins, chats, onNav, userName, user }) {
       </div>
 
       {/* diario card */}
-      <button className="tap" onClick={() => onNav('diario')} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0, marginBottom: 10, flexShrink: 0 }}>
-        <Card style={{ width: '100%' }}>
+      <button className="tap" onClick={() => onNav('diario')} style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', padding: 0, marginBottom: 0, flexShrink: 0 }}>
+        <Card style={{ width: '100%', border: 'none' }}>
           {last ? <>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8 }}>Ultimo umore registrato</p>
               <span style={{ color: C.accent, fontSize: 11, fontWeight: 600 }}>Vedi tutti →</span>
             </div>
-            <div style={{ color: C.teal, fontSize: 20, fontWeight: 700, textTransform: 'capitalize', marginBottom: 4 }}>{last.emotion}</div>
+            <div style={{ color: C.teal, fontSize: 22, fontWeight: 700, fontFamily: "'DM Serif Display',serif", textTransform: 'capitalize', marginBottom: 4 }}>{last.emotion}</div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ background: C.tealDim, color: C.teal, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{last.area}</span>
               <span style={{ color: C.muted, fontSize: 12 }}>Mood {last.mood}/10</span>
@@ -562,6 +562,9 @@ function Home({ checkins, chats, onNav, userName, user }) {
           </>}
         </Card>
       </button>
+
+      {/* separatore */}
+      <div style={{ height: 1, background: C.border, marginBottom: 12, flexShrink: 0 }}/>
 
       {/* CTA principale: check-in */}
       <button className="tap" onClick={() => onNav('checkin')} style={{ width: '100%', padding: '16px 20px', borderRadius: 22, border: `1.5px solid ${C.accent}`, background: C.accent, marginBottom: 10, textAlign: 'left', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
@@ -581,7 +584,9 @@ function Home({ checkins, chats, onNav, userName, user }) {
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
+        gridTemplateRows: '1fr 1fr',
         gap: 10,
+        flex: 1,
         paddingBottom: pad,
       }}>
         {[
@@ -591,7 +596,7 @@ function Home({ checkins, chats, onNav, userName, user }) {
           { id: 'finder',  icon: 'search',  title: 'Trova il percorso', sub: 'Supporto professionale' },
         ].map(item => (
           <button key={item.id} className="tap home-card" onClick={() => onNav(item.id)}
-            style={{ width: '100%', padding: 'clamp(16px,3vw,24px)', borderRadius: 20, border: `1.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 160 }}>
+            style={{ width: '100%', height: '100%', padding: 'clamp(16px,3vw,24px)', borderRadius: 20, border: `1.5px solid ${C.border}`, background: C.card, textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 140 }}>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: C.accentDim, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Ico n={item.icon} sz={18} c={C.accent}/>
             </div>
@@ -617,7 +622,7 @@ function EmoPicker({ title, sub, sel, intens, color, onSel, onInt, onNext, canSk
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 20 }}>
         {EMOTIONS.filter(e => e === 'Altro' || e !== excl).map(e => (
           <button key={e} className="tap" onClick={() => onSel(e)}
-            style={{ padding: '14px 20px', borderRadius: 100, border: `1.5px solid ${sel === e ? color : C.border}`, background: sel === e ? `${color}18` : C.card, color: sel === e ? color : 'rgba(45,45,45,.5)', fontSize: 15, fontWeight: 600, transition: 'all .18s', textAlign: 'center' }}>
+            style={{ padding: '15px 0', width: '100%', borderRadius: 100, border: `1.5px solid ${sel === e ? C.accent : C.border}`, background: sel === e ? C.accent : C.card, color: sel === e ? '#fff' : 'rgba(45,45,45,.5)', fontSize: 15, fontWeight: 600, transition: 'all .18s', textAlign: 'center' }}>
             {e}
           </button>
         ))}
@@ -651,7 +656,7 @@ function EmoPicker({ title, sub, sel, intens, color, onSel, onInt, onNext, canSk
         </Card>
       )}
       </div>
-      <div style={{ position: 'fixed', bottom: 80, left: 0, right: 0, padding: '0 20px 8px', background: C.bg }}>
+      <div style={{ position: 'sticky', bottom: 0, padding: '12px 0 8px', background: C.bg }}>
         <Btn variant={canSkip && !sel ? 'ghost' : 'amber'} onClick={onNext}
           disabled={!canSkip && !sel || (sel === 'Altro' && !customEmo?.trim())}>
           {canSkip && !sel ? 'Salta questo passaggio' : 'Continua →'}
@@ -687,7 +692,7 @@ function CheckIn({ onBack, onDone }) {
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(20px,4vw,40px) clamp(16px,5vw,48px) 110px' }} className="si" key={step}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: 'clamp(20px,4vw,40px) clamp(16px,5vw,48px) 20px' }} className="si" key={step}>
         {step === 1 && (
           <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '100%' }}>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
@@ -719,9 +724,9 @@ function CheckIn({ onBack, onDone }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
                 {AREAS.map(a => (
                   <button key={a.id} className="tap" onClick={() => sd({ ...d, area: a.l, customArea: a.id === 'altro' ? (d.customArea || '') : '' })}
-                    style={{ padding: '14px 20px', borderRadius: 100, border: `1.5px solid ${d.area === a.l ? C.teal : C.border}`, background: d.area === a.l ? C.tealDim : C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .18s' }}>
-                    <span style={{ fontSize: 16 }}>{a.e}</span>
-                    <span style={{ color: d.area === a.l ? C.teal : 'rgba(45,45,45,.5)', fontSize: 15, fontWeight: 600 }}>{a.l}</span>
+                    style={{ padding: '14px 20px', borderRadius: 100, border: `1.5px solid ${d.area === a.l ? C.accent : C.border}`, background: d.area === a.l ? C.accent : C.card, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'all .18s' }}>
+                    <span style={{ fontSize: 20 }}>{a.e}</span>
+                    <span style={{ color: d.area === a.l ? '#fff' : 'rgba(45,45,45,.5)', fontSize: 14, fontWeight: 600 }}>{a.l}</span>
                   </button>
                 ))}
               </div>
@@ -730,7 +735,7 @@ function CheckIn({ onBack, onDone }) {
                   style={{ width: '100%', padding: '14px 18px', borderRadius: 14, border: `1.5px solid ${d.customArea ? C.teal : C.border}`, background: C.card, color: C.text, fontSize: 15, outline: 'none', marginBottom: 16, transition: 'border-color .2s' }}/>
               )}
             </div>
-            <div style={{ position: 'fixed', bottom: 80, left: 0, right: 0, padding: '0 20px 8px', background: C.bg }}>
+            <div style={{ position: 'sticky', bottom: 0, padding: '12px 0 8px', background: C.bg }}>
               <Btn variant="grad" onClick={submit} disabled={saving || !d.area || (d.area === 'Altro' && !d.customArea?.trim())}>
                 {saving ? 'Un momento...' : 'Parliamo con Liv →'}
               </Btn>
@@ -760,8 +765,8 @@ function MoodFace({ val }) {
     : 'M39 68 Q56 79 73 68'
   const fc = '#2d2520'
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 140, height: 155 }}>
-      <svg width="125" height="150" viewBox="0 0 120 145" fill="none" style={{ overflow: 'visible' }}>
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 165, height: 185 }}>
+      <svg width="150" height="180" viewBox="0 0 120 145" fill="none" style={{ overflow: 'visible' }}>
         <defs>
           <radialGradient id="mgGlow" cx="38%" cy="35%" r="55%">
             <stop offset="0%" stopColor="rgba(255,255,255,0.5)" />
@@ -798,13 +803,13 @@ function MoodGate({ onBack, onContinue }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: C.bg }}>
       {/* header */}
-      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: `0.5px solid ${C.border}`, background: C.card }}>
+      <div style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: `1px solid ${C.border}`, background: C.card }}>
         <button className="tap" onClick={onBack} style={{ border: 'none', background: 'none', padding: 6, marginRight: 8, borderRadius: 10 }}>
           <Ico n="back" sz={20} c={C.text}/>
         </button>
       </div>
       {/* body */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 36px 40px' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between', padding: '20px 36px 40px' }}>
         <p style={{ fontFamily: "'DM Serif Display',serif", fontSize: 26, color: C.text, textAlign: 'center', marginBottom: 28, lineHeight: 1.3 }}>Come stai in questo momento?</p>
         <MoodFace val={val}/>
         <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 56, color: C.text, lineHeight: 1, margin: '16px 0 36px' }}>{val}</div>
@@ -1019,7 +1024,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg, position: 'relative' }}>
 
       {/* Header */}
-      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
         <button className="tap" onClick={handleBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}>
           <Ico n="back" sz={22} c={C.muted}/>
         </button>
@@ -1031,7 +1036,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
       </div>
 
       {/* Messaggi */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 8px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '16px 16px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
         {msgs.map((m, i) => (
           <div key={i} className={i === msgs.length - 1 ? 'fu' : ''} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8 }}>
             {m.role === 'assistant' && (
@@ -1039,13 +1044,13 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
             )}
             <div style={{
               maxWidth: '78%',
-              padding: '10px 14px',
+              padding: m.role === 'user' ? '10px 18px' : '10px 14px',
               borderRadius: m.role === 'assistant' ? '18px 18px 18px 4px' : '18px 18px 4px 18px',
               background: m.role === 'assistant' ? '#fff' : C.accent,
-              border: m.role === 'assistant' ? `0.5px solid ${C.border}` : 'none',
+              border: m.role === 'assistant' ? `1px solid ${C.border}` : 'none',
               color: m.role === 'assistant' ? C.text : '#fff',
-              fontSize: 15,
-              lineHeight: 1.72,
+              fontSize: m.role === 'user' ? 14 : 15,
+              lineHeight: m.role === 'assistant' ? 1.8 : 1.72,
               whiteSpace: 'pre-wrap',
             }}>{m.content || (m.role === 'assistant' && load ? <span style={{ opacity: .4 }}>…</span> : '')}</div>
           </div>
@@ -1062,7 +1067,7 @@ Genera il tuo messaggio di apertura. Inizia esattamente con: "Sono Liv, un'intel
 
       {/* Input */}
       <div style={{ padding: '10px 16px 24px', background: C.bg, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', background: C.card, borderRadius: 28, border: `0.5px solid ${C.border}`, padding: '8px 8px 8px 18px', gap: 8, boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', background: C.card, borderRadius: 28, border: `1px solid ${C.border}`, padding: '8px 8px 8px 18px', gap: 8, boxShadow: '0 1px 6px rgba(0,0,0,.04)' }}>
           <textarea ref={ta} value={inp}
             onChange={e => { si(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 140) + 'px' }}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() } }}
@@ -1161,7 +1166,7 @@ function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
     const isHigh = result.score >= 15
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
-        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
           <button className="tap" onClick={reset} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
           <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Risultato · {result.testSubtitle}</span>
         </div>
@@ -1203,7 +1208,7 @@ function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
   if (phase === 'disclaimer') {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
-        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
           <button className="tap" onClick={reset} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
           <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>{test.name}</span>
         </div>
@@ -1229,7 +1234,7 @@ function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
     const pct = qIdx / test.questions.length
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
-        <div style={{ padding: '12px 16px 0', borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+        <div style={{ padding: '12px 16px 0', borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <button className="tap" onClick={reset} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
             <span style={{ color: C.text, fontWeight: 600, fontSize: 15, flex: 1 }}>{test.subtitle}</span>
@@ -1244,14 +1249,14 @@ function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
             <p style={{ color: C.muted, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 20 }}>
               Nelle ultime 2 settimane, quanto spesso hai:
             </p>
-            <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 24, color: C.text, lineHeight: 1.4, marginBottom: 0 }}>
+            <h2 style={{ fontFamily: "'DM Serif Display',serif", fontSize: 26, color: C.text, lineHeight: 1.4, marginBottom: 0, textAlign: 'center' }}>
               {test.questions[qIdx]}
             </h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {test.scale.map((label, val) => (
               <button key={val} className="tap" onClick={() => answer(val)}
-                style={{ padding: '16px 20px', borderRadius: 14, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 15, fontWeight: 500, textAlign: 'left', cursor: 'pointer', transition: 'all .15s' }}>
+                style={{ padding: '20px 16px', borderRadius: 16, border: `1.5px solid ${C.border}`, background: C.card, color: C.text, fontSize: 16, fontWeight: 500, textAlign: 'left', cursor: 'pointer', transition: 'all .15s' }}>
                 {label}
               </button>
             ))}
@@ -1265,7 +1270,7 @@ function Tests({ onStartChat, onFinder, onSaveReport, onBack }) {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
       {onBack && (
-        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0 }}>
+        <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
           <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4, cursor: 'pointer' }}><Ico n="back" sz={22} c={C.muted}/></button>
           <span style={{ color: C.text, fontWeight: 600, fontSize: 15 }}>Test</span>
         </div>
@@ -1356,7 +1361,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg }}>
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `0.5px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 12, borderBottom: `1px solid ${C.border}`, flexShrink: 0, background: C.bg }}>
         <button className="tap" onClick={onBack} style={{ background: 'none', border: 'none', display: 'flex', padding: 4 }}><Ico n="back" sz={22} c={C.muted}/></button>
         <div style={{ flex: 1 }}>
           <div style={{ color: C.text, fontWeight: 400, fontSize: 16, fontFamily: "'DM Serif Display',serif" }}>Il mio Diario</div>
@@ -1369,7 +1374,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
           <div key={i}
             onClick={ev.type === 'chat' ? () => setExpandedChat(expandedChat === (ev.id ?? i) ? null : (ev.id ?? i)) : undefined}
             className={ev.type === 'chat' ? 'tap' : ''}
-            style={{ background: C.card, borderRadius: 18, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8, cursor: ev.type === 'chat' ? 'pointer' : 'default' }}>
+            style={{ background: C.card, borderRadius: 20, border: `1px solid ${C.border}`, padding: '18px 18px', marginBottom: 8, cursor: ev.type === 'chat' ? 'pointer' : 'default' }}>
             {ev.type === 'checkin' ? (() => {
               const isAuto = !!ev.auto
               return <>
@@ -1378,16 +1383,16 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                     <span style={{
                       background: isAuto ? 'rgba(139,144,112,.15)' : C.tealDim,
                       color: isAuto ? '#8B9070' : C.teal,
-                      padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700, letterSpacing: .3
+                      padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700, letterSpacing: .3
                     }}>{isAuto ? 'AUTO' : 'CHECK-IN'}</span>
                     <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
                   </div>
                   {ev.mood != null && <span style={{ color: C.muted, fontSize: 12 }}>Mood {ev.mood}/10</span>}
                 </div>
-                <div style={{ color: C.text, fontSize: 15, fontWeight: 600, textTransform: 'capitalize', marginBottom: 6 }}>{ev.emotionLabel || ev.emotion}</div>
+                <div style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", textTransform: 'capitalize', marginBottom: 6 }}>{ev.emotionLabel || ev.emotion}</div>
                 <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {(ev.areaLabel || ev.area) && <span style={{ background: C.tealDim, color: C.teal, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.areaLabel || ev.area}</span>}
-                  {(ev.secEmotionLabel || ev.secEmotion) && <span style={{ background: C.purpleDim, color: C.purple, padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.secEmotionLabel || ev.secEmotion}</span>}
+                  {(ev.areaLabel || ev.area) && <span style={{ background: C.tealDim, color: C.teal, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.areaLabel || ev.area}</span>}
+                  {(ev.secEmotionLabel || ev.secEmotion) && <span style={{ background: C.purpleDim, color: C.purple, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 600 }}>{ev.secEmotionLabel || ev.secEmotion}</span>}
                 </div>
               </>
             })() : (() => {
@@ -1403,7 +1408,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
               return <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: preview ? 6 : 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>CHAT</span>
+                    <span style={{ background: C.accentDim, color: C.accent, padding: '4px 10px', borderRadius: 20, fontSize: 11, fontWeight: 700 }}>CHAT</span>
                     <span style={{ color: C.muted, fontSize: 11 }}>{fmtDatetime(ev.sortTs, ev.date)}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -1418,12 +1423,12 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                   </div>
                 )}
                 {!isOpen && insight && (
-                  <div style={{ marginTop: 8, padding: '8px 12px', background: `${C.accent}08`, borderRadius: 10, border: `0.5px solid ${C.accent}18` }}>
+                  <div style={{ marginTop: 8, padding: '8px 12px', background: `${C.accent}08`, borderRadius: 10, border: `1px solid ${C.accent}18` }}>
                     <p style={{ color: 'rgba(0,0,0,.55)', fontSize: 12, lineHeight: 1.6, fontStyle: 'italic' }}>{insight}</p>
                   </div>
                 )}
                 {isOpen && (
-                  <div style={{ marginTop: 12, borderTop: `0.5px solid ${C.border}`, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ marginTop: 12, borderTop: `1px solid ${C.border}`, paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {messages.length > 0 ? messages.map((m, mi) => (
                       <div key={mi} style={{ display: 'flex', flexDirection: m.role === 'user' ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 6 }}>
                         {m.role === 'assistant' && (
@@ -1433,7 +1438,7 @@ function Diario({ checkins, chats, onBack, onAutoCI }) {
                           maxWidth: '80%', padding: '8px 12px', fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap',
                           borderRadius: m.role === 'assistant' ? '14px 14px 14px 3px' : '14px 14px 3px 14px',
                           background: m.role === 'assistant' ? '#fff' : C.accent,
-                          border: m.role === 'assistant' ? `0.5px solid ${C.border}` : 'none',
+                          border: m.role === 'assistant' ? `1px solid ${C.border}` : 'none',
                           color: m.role === 'assistant' ? C.text : '#fff',
                         }}>{m.content}</div>
                       </div>
@@ -1755,10 +1760,10 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
 
           {/* 1 — TREND EMOTIVO */}
           <div style={{ marginBottom: 8 }}>
-            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Trend emotivo</h3>
+            <h3 style={{ color: C.text, fontSize: 20, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Trend emotivo</h3>
             <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Andamento dell'umore nel tempo</p>
           </div>
-          <Card style={{ marginBottom: 24 }}>
+          <Card style={{ marginBottom: 32 }}>
             <MoodChart checkins={sorted}/>
           </Card>
 
@@ -1771,17 +1776,17 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
             return (
               <>
                 <div style={{ marginBottom: 8 }}>
-                  <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>I miei test</h3>
+                  <h3 style={{ color: C.text, fontSize: 20, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>I miei test</h3>
                   <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Storico PHQ-9 e GAD-7</p>
                 </div>
-                <Card style={{ marginBottom: 24 }}>
+                <Card style={{ marginBottom: 32 }}>
                   {testReports.length === 0
                     ? <p style={{ color: C.muted, fontSize: 14 }}>Nessun test completato ancora.</p>
                     : testReports.map((r, i) => {
                         const col = scoreColor(r.score)
                         const dateStr = r.date ? new Date(r.date).toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
                         return (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: i < testReports.length - 1 ? 14 : 0, marginBottom: i < testReports.length - 1 ? 14 : 0, borderBottom: i < testReports.length - 1 ? `0.5px solid ${C.border}` : 'none' }}>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, paddingBottom: i < testReports.length - 1 ? 14 : 0, marginBottom: i < testReports.length - 1 ? 14 : 0, borderBottom: i < testReports.length - 1 ? `1px solid ${C.border}` : 'none' }}>
                             <div style={{ width: 44, height: 44, borderRadius: 12, background: col + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, border: `1.5px solid ${col}33` }}>
                               <span style={{ fontSize: 16, fontWeight: 700, color: col, fontFamily: "'DM Serif Display',serif" }}>{r.score}</span>
                             </div>
@@ -1804,10 +1809,10 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
           {/* 2 — AREE PIÙ COINVOLTE */}
           {topAreas.length > 0 && <>
             <div style={{ marginBottom: 8 }}>
-              <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Aree più coinvolte</h3>
+              <h3 style={{ color: C.text, fontSize: 20, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Aree più coinvolte</h3>
               <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Ultimi 30 giorni</p>
             </div>
-            <Card style={{ marginBottom: 24 }}>
+            <Card style={{ marginBottom: 32 }}>
               {topAreas.map(([area, count], i) => {
                 const pct = Math.round((count / Math.max(last30.length, 1)) * 100) || 1
                 return (
@@ -1828,13 +1833,13 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
           {/* 3 — EMOZIONI FREQUENTI */}
           {topEmos.length > 0 && <>
             <div style={{ marginBottom: 8 }}>
-              <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Emozioni frequenti</h3>
+              <h3 style={{ color: C.text, fontSize: 20, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Emozioni frequenti</h3>
               <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Ultimi 30 giorni</p>
             </div>
-            <Card style={{ marginBottom: 24 }}>
+            <Card style={{ marginBottom: 32 }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {topEmos.map(([emo], i) => (
-                  <div key={emo} style={{ background: i === 0 ? C.accent : C.accentDim, color: i === 0 ? '#fff' : C.text, padding: '7px 16px', borderRadius: 100, fontSize: 13, fontWeight: 600 }}>{emo}</div>
+                  <div key={emo} style={{ background: i === 0 ? C.accent : C.accentDim, color: i === 0 ? '#fff' : C.text, padding: '9px 18px', borderRadius: 100, fontSize: 14, fontWeight: 600 }}>{emo}</div>
                 ))}
               </div>
             </Card>
@@ -1842,12 +1847,12 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
 
           {/* 4 — ANALISI AI */}
           <div style={{ marginBottom: 8 }}>
-            <h3 style={{ color: C.text, fontSize: 18, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Schemi di pensiero ricorrenti</h3>
+            <h3 style={{ color: C.text, fontSize: 20, fontWeight: 400, fontFamily: "'DM Serif Display',serif", marginBottom: 2 }}>Schemi di pensiero ricorrenti</h3>
             <p style={{ color: C.muted, fontSize: 12, marginBottom: 12 }}>Analisi generata da Liv</p>
           </div>
 
           {analysisLoading ? (
-            <Card style={{ marginBottom: 24 }}>
+            <Card style={{ marginBottom: 32 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '10px 0' }}>
                 <div style={{ display: 'flex', gap: 5 }}>
                   {[0,1,2].map(i => <div key={i} className={`b${i}`} style={{ width: 7, height: 7, borderRadius: '50%', background: C.accent }}/>)}
@@ -1859,7 +1864,7 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
               </div>
             </Card>
           ) : analysisErr ? (
-            <Card style={{ marginBottom: 24 }}>
+            <Card style={{ marginBottom: 32 }}>
               <p style={{ color: C.muted, fontSize: 13 }}>Non è stato possibile generare l'analisi. Riprova più tardi.</p>
             </Card>
           ) : analysis && <>
@@ -1878,7 +1883,7 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
 
             {/* Sintesi */}
             {analysis.sintesi && (
-              <Card style={{ marginBottom: 16, background: `linear-gradient(135deg,${C.accentDim},${C.faint})`, border: `0.5px solid ${C.accent}20` }}>
+              <Card style={{ marginBottom: 16, background: `linear-gradient(135deg,${C.accentDim},${C.faint})`, border: `1px solid ${C.accent}20` }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
                   <div style={{ width: 22, height: 22, borderRadius: '50%', background: C.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#fff', fontFamily: "'DM Serif Display',serif" }}>L</div>
                   <span style={{ color: C.accent, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8 }}>Lettura del periodo</span>
@@ -1889,7 +1894,7 @@ function Profile({ checkins, chats, reports, userName, onBack, user, onLogout, a
 
             {/* Domanda riflessiva */}
             {analysis.domanda && (
-              <div style={{ marginBottom: 24, padding: '22px 20px', borderRadius: 20, background: C.accentDim, border: `0.5px solid ${C.accent}25` }}>
+              <div style={{ marginBottom: 24, padding: '22px 20px', borderRadius: 20, background: C.accentDim, border: `1px solid ${C.accent}25` }}>
                 <p style={{ color: C.accent, fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .8, marginBottom: 12 }}>Domanda riflessiva</p>
                 <p style={{ color: C.text, fontSize: 18, lineHeight: 1.6, fontFamily: "'DM Serif Display',serif", fontWeight: 400 }}>"{analysis.domanda}"</p>
               </div>
@@ -1969,7 +1974,7 @@ function AdminScreen() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: C.bg, overflowY: 'auto' }}>
       {/* header */}
-      <div style={{ background: C.card, borderBottom: `0.5px solid ${C.border}`, padding: '20px 24px' }}>
+      <div style={{ background: C.card, borderBottom: `1px solid ${C.border}`, padding: '20px 24px' }}>
         <div style={{ fontFamily: "'DM Serif Display',serif", fontSize: 24, color: C.text, marginBottom: 4 }}>Admin</div>
         <div style={{ color: C.muted, fontSize: 12 }}>Solo per {ADMIN_EMAIL}</div>
       </div>
@@ -1982,7 +1987,7 @@ function AdminScreen() {
             { label: 'Conversazioni', val: chats.length },
             { label: 'Media messaggi', val: avgMsgs },
           ].map(s => (
-            <div key={s.label} style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px' }}>
+            <div key={s.label} style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: '14px 16px' }}>
               <div style={{ color: C.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 4 }}>{s.label}</div>
               <div style={{ color: C.accent, fontSize: 24, fontWeight: 700 }}>{s.val}</div>
             </div>
@@ -1991,7 +1996,7 @@ function AdminScreen() {
 
         {/* Top emozioni */}
         {topEmos.length > 0 && (
-          <div style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 20 }}>
+          <div style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: '14px 16px', marginBottom: 20 }}>
             <div style={{ color: C.muted, fontSize: 10, fontWeight: 600, textTransform: 'uppercase', letterSpacing: .5, marginBottom: 10 }}>Emozioni più frequenti</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {topEmos.map(([e, n]) => (
@@ -2006,7 +2011,7 @@ function AdminScreen() {
         {chats.map((c, i) => {
           const key = c.created_at + i
           return (
-            <div key={key} style={{ background: C.card, borderRadius: 16, border: `0.5px solid ${C.border}`, padding: '14px 16px', marginBottom: 8 }}>
+            <div key={key} style={{ background: C.card, borderRadius: 16, border: `1px solid ${C.border}`, padding: '14px 16px', marginBottom: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <span style={{ background: C.accentDim, color: C.accent, padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 700 }}>{anonId(c.user_id)}</span>
@@ -2340,12 +2345,12 @@ export default function App() {
 
       {/* tab bar */}
       {!isFS && (
-        <div style={{ borderTop: `1px solid ${C.border}`, background: C.tabBarBg, padding: '10px 0 28px', display: 'flex', flexShrink: 0 }}>
+        <div style={{ borderTop: `1px solid ${C.border}`, background: C.tabBarBg, padding: '12px 0 28px', display: 'flex', flexShrink: 0 }}>
           {TABS.map(t => (
             <button key={t.id} className="tap" onClick={() => { setSeed(null); setScreen(t.id === 'chat' ? 'mood-gate' : t.id) }}
               style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, border: 'none', background: 'none', padding: '4px 0' }}>
-              <Ico n={t.icon} sz={20} c={screen === t.id ? C.accent : 'rgba(45,45,45,.25)'}/>
-              <span style={{ fontSize: 9, fontWeight: 600, color: screen === t.id ? C.accent : 'rgba(45,45,45,.25)', letterSpacing: .2 }}>{t.label}</span>
+              <Ico n={t.icon} sz={22} c={screen === t.id ? C.accent : 'rgba(45,45,45,.25)'}/>
+              <span style={{ fontSize: 10, fontWeight: 600, color: screen === t.id ? C.accent : 'rgba(45,45,45,.25)', letterSpacing: .2 }}>{t.label}</span>
             </button>
           ))}
         </div>
